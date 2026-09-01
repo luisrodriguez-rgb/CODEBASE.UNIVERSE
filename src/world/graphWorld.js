@@ -421,7 +421,23 @@ export class GraphWorld {
     const search = state.searchQuery;
     const activePathNodes = new Set(this.pathFollower.activePath);
 
+    // Viewport Frustum Bounds (in World coordinates)
+    const halfW = (this.canvas.width / (2 * camera.zoom)) + 140;
+    const halfH = (this.canvas.height / (2 * camera.zoom)) + 140;
+    const camX = -camera.x;
+    const camY = -camera.y;
+
     for (const node of graph.nodes.values()) {
+      const isSelected = selectedId === node.id;
+      const isHovered = hoveredId === node.id;
+
+      // Viewport Frustum Culling
+      if (!isSelected && !isHovered) {
+        if (node.x < camX - halfW || node.x > camX + halfW || node.y < camY - halfH || node.y > camY + halfH) {
+          continue;
+        }
+      }
+
       const stat = analysis.nodeStats.get(node.id);
       if (!stat) continue;
 
@@ -437,8 +453,6 @@ export class GraphWorld {
         visible = false;
       }
 
-      const isSelected = selectedId === node.id;
-      const isHovered = hoveredId === node.id;
       const isBlackout = effects.blackoutNodes.has(node.id);
       const isFlowTarget = activePathNodes.has(node.id);
 

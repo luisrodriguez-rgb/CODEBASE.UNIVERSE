@@ -97,7 +97,7 @@ export class GitHubCloudImporter {
       'poetry.lock', 'composer.lock', 'gemfile.lock', 'mix.lock', 'flake.lock'
     ]);
 
-    const codeFiles = allFiles.filter(item => {
+    let codeFiles = allFiles.filter(item => {
       if (item.type !== 'blob') return false;
       const p = item.path.toLowerCase();
       const fileName = p.split('/').pop();
@@ -120,8 +120,23 @@ export class GitHubCloudImporter {
         : 'No supported source code files found in this repository.');
     }
 
+    // Smart Large-Repo Scaling (React, Vue, Kubernetes, Monorepos)
+    // Filters out deep test fixtures and caps to the top 450 architectural modules for 60 FPS performance
+    if (codeFiles.length > 450) {
+      const coreFiles = codeFiles.filter(item => {
+        const p = item.path.toLowerCase();
+        if (p.includes('__tests__/') || p.includes('/test/') || p.includes('/tests/') || 
+            p.includes('/fixtures/') || p.includes('/e2e/') || p.includes('/scripts/jest/') ||
+            p.includes('/benchmarks/')) {
+          return false;
+        }
+        return true;
+      });
+      codeFiles = coreFiles.length >= 100 ? coreFiles.slice(0, 450) : codeFiles.slice(0, 450);
+    }
+
     if (progressCallback) {
-      progressCallback(i18n.currentLang === 'es' ? `Procesando topologia de ${codeFiles.length} modulos...` : `Analyzing topology of ${codeFiles.length} modules...`);
+      progressCallback(i18n.currentLang === 'es' ? `Procesando topologia de ${codeFiles.length} modulos principales...` : `Analyzing topology of ${codeFiles.length} primary modules...`);
     }
 
     // 4. Build CodeGraph
@@ -176,7 +191,7 @@ export class GitHubCloudImporter {
       graph.addNode(entity);
     }
 
-    // 5. Intelligent Multi-Tier Cross-Linking
+    // 5. Intelligent Bounded Cross-Linking (O(N) Complexity)
     const edgeSet = new Set();
     const addSafeEdge = (srcId, tgtId, type = 'imports') => {
       if (srcId && tgtId && srcId !== tgtId) {
@@ -198,53 +213,31 @@ export class GitHubCloudImporter {
     const powerModules = parsedEntities.filter(e => e.biome === 'power');
     const transmissionModules = parsedEntities.filter(e => e.biome === 'transmission');
 
-    // Link Pages -> Layouts & Components
+    // Bounded Linear Links (Prevents N*M edge explosion on large codebases)
     for (const page of pages) {
-      for (const layout of layouts) {
-        addSafeEdge(page.id, layout.id, 'imports');
-      }
-      for (const comp of components) {
-        if (Math.random() > 0.4) {
-          addSafeEdge(page.id, comp.id, 'calls');
-        }
-      }
-      for (const data of dataModules) {
-        addSafeEdge(page.id, data.id, 'calls');
-      }
+      for (const layout of layouts.slice(0, 2)) addSafeEdge(page.id, layout.id, 'imports');
+      for (const comp of components.slice(0, 3)) addSafeEdge(page.id, comp.id, 'calls');
+      for (const data of dataModules.slice(0, 2)) addSafeEdge(page.id, data.id, 'calls');
     }
 
-    // Link Layouts -> Components & Styles
     for (const layout of layouts) {
-      for (const comp of components.slice(0, 5)) {
-        addSafeEdge(layout.id, comp.id, 'imports');
-      }
-      for (const style of styleModules) {
-        addSafeEdge(layout.id, style.id, 'imports');
-      }
+      for (const comp of components.slice(0, 4)) addSafeEdge(layout.id, comp.id, 'imports');
+      for (const style of styleModules.slice(0, 2)) addSafeEdge(layout.id, style.id, 'imports');
     }
 
-    // Link Components -> Styles & Stores
-    for (const comp of components) {
-      for (const style of styleModules) {
-        if (Math.random() > 0.7) addSafeEdge(comp.id, style.id, 'imports');
-      }
-      for (const p of powerModules) {
-        if (Math.random() > 0.5) addSafeEdge(comp.id, p.id, 'calls');
-      }
+    for (const comp of components.slice(0, 60)) {
+      for (const style of styleModules.slice(0, 1)) addSafeEdge(comp.id, style.id, 'imports');
+      for (const p of powerModules.slice(0, 1)) addSafeEdge(comp.id, p.id, 'calls');
     }
 
-    // Link Transmission (APIs/Gateway) -> Bunker (Data/Storage)
-    for (const t of transmissionModules) {
-      for (const d of dataModules) {
-        addSafeEdge(t.id, d.id, 'calls');
-      }
+    for (const t of transmissionModules.slice(0, 30)) {
+      for (const d of dataModules.slice(0, 2)) addSafeEdge(t.id, d.id, 'calls');
     }
 
-    // Link Core Root Orchestrators -> Entry Subsystems
-    for (const core of coreConfigs) {
-      for (const page of pages.slice(0, 4)) addSafeEdge(core.id, page.id, 'imports');
+    for (const core of coreConfigs.slice(0, 10)) {
+      for (const page of pages.slice(0, 3)) addSafeEdge(core.id, page.id, 'imports');
       for (const comp of components.slice(0, 3)) addSafeEdge(core.id, comp.id, 'imports');
-      for (const t of transmissionModules.slice(0, 3)) addSafeEdge(core.id, t.id, 'calls');
+      for (const t of transmissionModules.slice(0, 2)) addSafeEdge(core.id, t.id, 'calls');
     }
 
     // Directory-Level Clustering Fallback
