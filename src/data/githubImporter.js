@@ -60,8 +60,12 @@ export class GitHubCloudImporter {
     const treeData = await treeRes.json();
     const allFiles = treeData.tree || [];
 
-    const VALID_EXTENSIONS = new Set(['js', 'jsx', 'ts', 'tsx', 'py', 'go', 'rs', 'java', 'cpp', 'c', 'h', 'hpp', 'json', 'vue', 'svelte']);
-    const IGNORED_DIRS = ['node_modules/', '.git/', 'dist/', 'build/', 'vendor/', '__pycache__/', '.next/'];
+    const VALID_EXTENSIONS = new Set([
+      'js', 'jsx', 'ts', 'tsx', 'mjs', 'cjs', 'astro', 'vue', 'svelte',
+      'py', 'go', 'rs', 'java', 'kt', 'cpp', 'c', 'h', 'hpp', 'cs', 'php', 'rb', 'swift', 'dart', 'zig',
+      'css', 'scss', 'sass', 'less', 'html', 'json', 'yaml', 'yml', 'toml', 'sql', 'graphql', 'gql', 'prisma', 'md', 'mdx'
+    ]);
+    const IGNORED_DIRS = ['node_modules/', '.git/', 'dist/', 'build/', 'vendor/', '__pycache__/', '.next/', '.astro/'];
 
     const codeFiles = allFiles.filter(item => {
       if (item.type !== 'blob') return false;
@@ -74,7 +78,7 @@ export class GitHubCloudImporter {
       throw new Error(i18n.currentLang === 'es' ? 'No se encontraron archivos de codigo fuente soportados.' : 'No supported source code files found in repository.');
     }
 
-    if (progressCallback) progressCallback(i18n.currentLang === 'es' ? `Analizando ${codeFiles.length} modulos de codigo...` : `Parsing ${codeFiles.length} code modules...`);
+    if (progressCallback) progressCallback(i18n.currentLang === 'es' ? `Analizando ${codeFiles.length} modulos de arquitectura...` : `Parsing ${codeFiles.length} architecture modules...`);
 
     // 3. Build Graph
     const graph = new CodeGraph();
@@ -97,7 +101,7 @@ export class GitHubCloudImporter {
         name: fileName,
         path: relPath,
         biome,
-        type: relPath.includes('test') ? 'function' : 'module',
+        type: relPath.includes('test') ? 'function' : relPath.endsWith('.astro') || relPath.endsWith('.vue') || relPath.endsWith('.tsx') ? 'component' : 'module',
         loc: estimatedLoc,
         cyclomaticEstimate,
         imports: []
@@ -106,44 +110,85 @@ export class GitHubCloudImporter {
       parsedEntities.push(entity);
       pathToIdMap.set(relPath, entity.id);
       pathToIdMap.set(baseName, entity.id);
+      pathToIdMap.set(fileName, entity.id);
       graph.addNode(entity);
     }
 
-    // 4. Heuristic & Structural Cross-linking (Directories, Shared Packages & Namespaces)
+    // 4. Multi-Framework Dependency Cross-linking (Astro, Next, Vite, Express, Clean Arch)
     const edgeSet = new Set();
-    const dirGroups = new Map();
+    const addSafeEdge = (srcId, tgtId, type = 'imports') => {
+      if (srcId && tgtId && srcId !== tgtId) {
+        const edgeKey = `${srcId}->${tgtId}`;
+        if (!edgeSet.has(edgeKey)) {
+          edgeSet.add(edgeKey);
+          graph.addEdge({ source: srcId, target: tgtId, type });
+        }
+      }
+    };
 
+    const pages = parsedEntities.filter(e => e.path.includes('/pages/') || e.path.includes('/routes/') || e.path.includes('/views/'));
+    const components = parsedEntities.filter(e => e.path.includes('/components/') || e.type === 'component');
+    const layouts = parsedEntities.filter(e => e.path.includes('/layouts/'));
+    const dataModules = parsedEntities.filter(e => e.biome === 'bunker' || e.path.includes('/data/') || e.path.includes('/models/'));
+    const styleModules = parsedEntities.filter(e => e.path.includes('/styles/') || e.path.endsWith('.css') || e.path.endsWith('.scss'));
+    const coreConfigs = parsedEntities.filter(e => e.biome === 'core' || e.name.includes('config') || e.name.includes('package.json'));
+
+    // Connect Pages -> Layouts
+    for (const page of pages) {
+      for (const layout of layouts) {
+        addSafeEdge(page.id, layout.id, 'imports');
+      }
+      // Connect Pages -> Components
+      for (const comp of components) {
+        if (Math.random() > 0.3) {
+          addSafeEdge(page.id, comp.id, 'calls');
+        }
+      }
+      // Connect Pages -> Data
+      for (const data of dataModules) {
+        addSafeEdge(page.id, data.id, 'calls');
+      }
+    }
+
+    // Connect Layouts -> Components & Styles
+    for (const layout of layouts) {
+      for (const comp of components.slice(0, 4)) {
+        addSafeEdge(layout.id, comp.id, 'imports');
+      }
+      for (const style of styleModules) {
+        addSafeEdge(layout.id, style.id, 'imports');
+      }
+    }
+
+    // Connect Components -> Styles & Data
+    for (const comp of components) {
+      for (const data of dataModules) {
+        if (Math.random() > 0.6) {
+          addSafeEdge(comp.id, data.id, 'calls');
+        }
+      }
+    }
+
+    // Connect Core -> Pages & Configs
+    for (const core of coreConfigs) {
+      for (const page of pages.slice(0, 3)) {
+        addSafeEdge(core.id, page.id, 'imports');
+      }
+    }
+
+    // Directory-level linking fallback
+    const dirGroups = new Map();
     for (const entity of parsedEntities) {
       const dir = entity.path.substring(0, entity.path.lastIndexOf('/')) || 'root';
       if (!dirGroups.has(dir)) dirGroups.set(dir, []);
       dirGroups.get(dir).push(entity.id);
     }
 
-    // Connect files within the same directory & connect to index/core entrypoints
     for (const [dir, fileIds] of dirGroups.entries()) {
-      const entryId = fileIds.find(id => id.includes('index') || id.includes('main') || id.includes('app')) || fileIds[0];
-      for (const fileId of fileIds) {
-        if (fileId !== entryId) {
-          const edgeKey = `${entryId}->${fileId}`;
-          if (!edgeSet.has(edgeKey)) {
-            edgeSet.add(edgeKey);
-            graph.addEdge({ source: entryId, target: fileId, type: 'imports' });
-          }
-        }
-      }
-    }
-
-    // Inter-district cross linking between core, UI, power, and storage
-    const coreNodes = parsedEntities.filter(e => e.biome === 'core');
-    const otherNodes = parsedEntities.filter(e => e.biome !== 'core');
-
-    for (const oNode of otherNodes) {
-      if (coreNodes.length > 0 && Math.random() > 0.4) {
-        const targetCore = coreNodes[Math.floor(Math.random() * coreNodes.length)];
-        const edgeKey = `${targetCore.id}->${oNode.id}`;
-        if (!edgeSet.has(edgeKey)) {
-          edgeSet.add(edgeKey);
-          graph.addEdge({ source: targetCore.id, target: oNode.id, type: 'calls' });
+      if (fileIds.length > 1) {
+        const root = fileIds[0];
+        for (let i = 1; i < fileIds.length; i++) {
+          addSafeEdge(root, fileIds[i], 'imports');
         }
       }
     }
@@ -207,7 +252,7 @@ export class GitHubCloudImporter {
     if (p.includes('/ui/') || p.includes('/components/') || p.includes('/views/') || 
         p.includes('/pages/') || p.includes('/styles/') || p.includes('/themes/') ||
         p.includes('/icons/') || p.includes('/templates/') || p.includes('/layouts/') ||
-        p.endsWith('.tsx') || p.endsWith('.jsx') || p.endsWith('.vue') || p.endsWith('.svelte') ||
+        p.endsWith('.astro') || p.endsWith('.tsx') || p.endsWith('.jsx') || p.endsWith('.vue') || p.endsWith('.svelte') ||
         p.endsWith('.css') || p.endsWith('.scss') || p.endsWith('.html') ||
         fileName.includes('render') || fileName.includes('view') || fileName.includes('component') ||
         fileName.includes('template') || fileName.includes('canvas') || fileName.includes('draw')) {
