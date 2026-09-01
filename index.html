@@ -430,22 +430,57 @@
     <!-- Next-Gen Git Time Machine Mini-Deck (Matching Concept Art Image 4) -->
     <div id="timeline-drawer" class="timeline-bar-dock hidden">
       <div class="tm-cyber-card">
-        <!-- Header -->
+        <!-- Header & Purpose -->
         <div class="tm-card-header">
           <div class="tm-title-strip">
             <span class="tm-status-dot"></span>
-            <span id="timeline-header-title" class="tm-title-text">TIME MACHINE // GIT</span>
+            <span id="timeline-header-title" class="tm-title-text">TIME MACHINE // ARCHITECTURAL GIT EVOLUTION</span>
           </div>
           <button id="close-timeline-btn" class="win-ctrl-btn close-btn" title="Close">[X]</button>
+        </div>
+
+        <!-- Purpose Banner -->
+        <div class="tm-purpose-banner" id="tm-purpose-banner">
+          [?] PROPÓSITO: Reproduce la evolución temporal del software commit a commit. Observa en el mapa 2.5D cómo nacieron los módulos y cómo cambió la salud arquitectónica en cada era.
+        </div>
+
+        <!-- Active Commit Dossier & Health Bar -->
+        <div class="tm-commit-dossier">
+          <div class="dossier-top-line">
+            <div class="commit-meta-left">
+              <span id="current-commit-hash" class="dossier-hash">Commit 8F31A9</span>
+              <span class="meta-separator">·</span>
+              <span id="current-commit-date" class="dossier-date">2026-08-30</span>
+              <span class="meta-separator">·</span>
+              <span id="current-commit-author" class="dossier-author">master_architect</span>
+            </div>
+            <div class="commit-health-box">
+              <span class="health-lbl" id="tl-lbl-health-txt">SALUD:</span>
+              <strong id="tl-stat-health" class="health-val">82%</strong>
+              <span id="tl-stat-health-badge" class="health-badge good">[ESTABLE]</span>
+            </div>
+          </div>
+
+          <div id="current-commit-msg" class="dossier-msg">
+            "Initial project genesis: entry point, minimal core loop"
+          </div>
+
+          <!-- Active Citadela Population Meter -->
+          <div class="dossier-population-bar">
+            <div id="tm-population-fill" class="population-fill" style="width: 75%;"></div>
+          </div>
+          <div class="dossier-pop-text">
+            <span id="tm-active-nodes-stat">347 / 568 módulos activos en este commit (61%)</span>
+          </div>
         </div>
 
         <!-- Years Axis & Sparkline Graph -->
         <div class="tm-graph-section">
           <div class="tm-years-axis">
-            <span>2023</span>
-            <span>2024</span>
-            <span>2025</span>
-            <span class="active-year">2026</span>
+            <span>2023 [Génesis]</span>
+            <span>2024 [UI Grid]</span>
+            <span>2025 [Power Bus]</span>
+            <span class="active-year">2026 [HEAD Actual]</span>
           </div>
           
           <div class="tm-sparkline-wrap">
@@ -462,7 +497,7 @@
             
             <!-- Scrubber line & active commit tag -->
             <div id="tm-scrubber-marker" class="tm-scrubber-marker" style="left: 75%;">
-              <div class="scrubber-label" id="current-commit-hash">Commit 8F31A</div>
+              <div class="scrubber-label" id="current-commit-tag">Commit 8F31A</div>
               <div class="scrubber-line"></div>
               <div class="scrubber-pin"></div>
             </div>
@@ -471,16 +506,25 @@
           </div>
         </div>
 
+        <!-- Quick Era Jump Chips -->
+        <div class="tm-era-chips">
+          <button class="era-chip" data-gen="0">2024 Genesis</button>
+          <button class="era-chip" data-gen="2">2024 Metropolis</button>
+          <button class="era-chip" data-gen="4">2025 Power Grid</button>
+          <button class="era-chip" data-gen="6">2025 AI Engine</button>
+          <button class="era-chip active" data-gen="11">2026 HEAD Presente</button>
+        </div>
+
         <!-- Controls & Delta Stats Footer -->
         <div class="tm-footer-grid">
           <!-- Playback Controls -->
           <div class="tm-playback-cluster">
-            <button id="timeline-play-btn" class="tm-play-btn" title="Play / Pause">
+            <button id="timeline-play-btn" class="tm-play-btn" title="Reproducir Evolución">
               <span id="tm-play-icon">▶</span>
             </button>
-            <button id="timeline-prev-btn" class="tm-step-btn" title="Previous Commit">|<</button>
-            <button id="timeline-speed-btn" class="tm-speed-btn" title="Playback Speed">1.0x</button>
-            <button id="timeline-next-btn" class="tm-step-btn" title="Next Commit">>></button>
+            <button id="timeline-prev-btn" class="tm-step-btn" title="Commit Anterior">|<</button>
+            <button id="timeline-speed-btn" class="tm-speed-btn" title="Velocidad">1.0x</button>
+            <button id="timeline-next-btn" class="tm-step-btn" title="Siguiente Commit">>></button>
           </div>
 
           <!-- Commit Delta Telemetry -->

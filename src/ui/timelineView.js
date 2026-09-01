@@ -2,6 +2,13 @@
  * Next-Gen Git Time Machine & Code Archaeology Controller for CODEBASE.UNIVERSE.
  * Interactive Sparkline Timeline Deck matching Concept Art Image 4.
  *
+ * Features:
+ * - Live 2.5D World Synchronization: Watch the citadel grow commit by commit!
+ * - Purpose and Value Explanation for software architects
+ * - Commit Dossier: Message, Author, Date, and Health Score Gauge
+ * - Quick Era Jump Chips (2024 Genesis -> 2026 Current HEAD)
+ * - Playback Cluster with loop, speed toggle, and step controls
+ *
  * ZERO EMOJIS.
  */
 
@@ -26,11 +33,22 @@ export class TimelineViewController {
     this.slider = document.getElementById('timeline-slider');
     this.scrubberMarker = document.getElementById('tm-scrubber-marker');
 
+    this.purposeBanner = document.getElementById('tm-purpose-banner');
     this.hashEl = document.getElementById('current-commit-hash');
+    this.dateEl = document.getElementById('current-commit-date');
+    this.authorEl = document.getElementById('current-commit-author');
+    this.msgEl = document.getElementById('current-commit-msg');
+    this.healthValEl = document.getElementById('tl-stat-health');
+    this.healthBadgeEl = document.getElementById('tl-stat-health-badge');
+    this.populationFillEl = document.getElementById('tm-population-fill');
+    this.activeNodesStatEl = document.getElementById('tm-active-nodes-stat');
+    this.commitTagEl = document.getElementById('current-commit-tag');
+
     this.deltaModulesEl = document.getElementById('tm-delta-modules');
     this.deltaFuncsEl = document.getElementById('tm-delta-funcs');
     this.deltaLinksEl = document.getElementById('tm-delta-links');
     this.shiftPathEl = document.getElementById('tm-shift-path');
+    this.eraChips = document.querySelectorAll('.era-chip');
 
     this.timeline = [];
     this.archaeologyData = null;
@@ -47,8 +65,7 @@ export class TimelineViewController {
   initEvents() {
     this.closeBtn?.addEventListener('click', () => {
       sfx.playClick();
-      this.pause();
-      this.drawer?.classList.add('hidden');
+      this.close();
     });
 
     this.prevBtn?.addEventListener('click', () => {
@@ -86,6 +103,14 @@ export class TimelineViewController {
       this.goToIndex(idx);
     });
 
+    this.eraChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        sfx.playClick();
+        const genIdx = parseInt(chip.getAttribute('data-gen'), 10) || 0;
+        this.goToIndex(Math.min(this.timeline.length - 1, genIdx));
+      });
+    });
+
     i18n.subscribe(() => {
       this.updateI18n();
     });
@@ -116,6 +141,8 @@ export class TimelineViewController {
   close() {
     this.pause();
     this.drawer?.classList.add('hidden');
+    // Restore full present-day world
+    this.state.setTimelineCommit(null);
   }
 
   togglePlay() {
@@ -130,10 +157,10 @@ export class TimelineViewController {
     this.isPlaying = true;
     if (this.playIcon) this.playIcon.textContent = '⏸';
 
-    const intervalMs = Math.max(250, 1200 / this.speed);
+    const intervalMs = Math.max(250, 1400 / this.speed);
     this.playbackInterval = setInterval(() => {
       if (this.currentIndex >= this.timeline.length - 1) {
-        this.currentIndex = 0; // Loop around
+        this.currentIndex = 0; // Loop around to Genesis
       } else {
         this.currentIndex++;
       }
@@ -164,6 +191,16 @@ export class TimelineViewController {
     if (this.slider) this.slider.value = pct;
     if (this.scrubberMarker) this.scrubberMarker.style.left = `${Math.max(8, Math.min(92, pct))}%`;
 
+    // Highlight active era chip
+    this.eraChips.forEach(chip => {
+      const g = parseInt(chip.getAttribute('data-gen'), 10);
+      chip.classList.toggle('active', Math.abs(g - index) <= 1);
+    });
+
+    const commit = this.timeline[this.currentIndex];
+    // Sync with Reactive Game State & World Canvas!
+    this.state.setTimelineCommit(commit);
+
     this.renderCurrentCommit();
   }
 
@@ -173,9 +210,43 @@ export class TimelineViewController {
     const isEs = i18n.currentLang === 'es';
 
     const hash = commit.hash ? commit.hash.substring(0, 6).toUpperCase() : `GEN-${this.currentIndex + 1}`;
+    
     if (this.hashEl) this.hashEl.textContent = `Commit ${hash}`;
+    if (this.commitTagEl) this.commitTagEl.textContent = `Commit ${hash}`;
+    if (this.dateEl) this.dateEl.textContent = commit.date || '2024-03-15';
+    if (this.authorEl) this.authorEl.textContent = commit.author || 'architect';
+    if (this.msgEl) this.msgEl.textContent = `"${commit.message || 'Architectural structural evolution'}"`;
 
-    const nodeDelta = Math.max(1, Math.round((commit.nodesCount || 10) * 0.25));
+    // Health Score Bar
+    const health = commit.healthScore || 75;
+    if (this.healthValEl) this.healthValEl.textContent = `${health}%`;
+    if (this.healthBadgeEl) {
+      if (health >= 75) {
+        this.healthBadgeEl.textContent = isEs ? '[ESTABLE]' : '[STABLE]';
+        this.healthBadgeEl.className = 'health-badge good';
+      } else if (health >= 60) {
+        this.healthBadgeEl.textContent = isEs ? '[ALERTA]' : '[WARNING]';
+        this.healthBadgeEl.className = 'health-badge warn';
+      } else {
+        this.healthBadgeEl.textContent = isEs ? '[DEUDA ALTA]' : '[HIGH DEBT]';
+        this.healthBadgeEl.className = 'health-badge debt';
+      }
+    }
+
+    // Population & Node Count
+    const totalGraphNodes = this.state.graph?.nodes.size || 500;
+    const activeCount = commit.nodeCount || Math.round(totalGraphNodes * ((this.currentIndex + 1) / this.timeline.length));
+    const popPct = Math.min(100, Math.round((activeCount / totalGraphNodes) * 100));
+
+    if (this.populationFillEl) this.populationFillEl.style.width = `${popPct}%`;
+    if (this.activeNodesStatEl) {
+      this.activeNodesStatEl.textContent = isEs
+        ? `${activeCount} / ${totalGraphNodes} módulos activos en este commit (${popPct}%)`
+        : `${activeCount} / ${totalGraphNodes} active modules in this commit (${popPct}%)`;
+    }
+
+    // Delta telemetry
+    const nodeDelta = Math.max(1, Math.round(activeCount * 0.22));
     const funcDelta = Math.round(nodeDelta * 2.4);
     const linkDelta = Math.round(nodeDelta * 4.8);
 
@@ -185,11 +256,18 @@ export class TimelineViewController {
 
     if (this.shiftPathEl) {
       const shifts = [
-        'UI -> CORE -> ENGINE',
-        'CORE -> API GATEWAY',
-        'STATE STORE -> DISPATCHER',
-        'DATA MODEL -> STORAGE SILO',
-        'ENGINE -> SHADER PIPELINE'
+        'GENESIS -> CORE BOOTSTRAP',
+        'CORE -> METROPOLIS GRID (UI)',
+        'UI -> STORAGE BUNKER',
+        'BUNKER -> TRANSMISSION HUB (API)',
+        'API -> POWER GRID (STATE)',
+        'POWER -> AI ENGINE PIPELINE',
+        'AI -> RESEARCH LABS (TESTS)',
+        'LABS -> DEATH STAR MONOLITH',
+        'MONOLITH -> MODULAR REFACTOR',
+        'REFACTOR -> WORKER CACHE',
+        'CACHE -> CANVAS PROJECTOR',
+        'PROJECTOR -> HEAD INTEGRATION'
       ];
       this.shiftPathEl.textContent = shifts[this.currentIndex % shifts.length];
     }
@@ -199,8 +277,18 @@ export class TimelineViewController {
     const isEs = i18n.currentLang === 'es';
     const titleEl = document.getElementById('timeline-header-title');
     if (titleEl) {
-      titleEl.textContent = isEs ? 'MÁQUINA DEL TIEMPO // GIT' : 'TIME MACHINE // GIT';
+      titleEl.textContent = isEs ? 'MÁQUINA DEL TIEMPO // EVOLUCIÓN DE CITADELA GIT' : 'TIME MACHINE // ARCHITECTURAL GIT EVOLUTION';
     }
+
+    if (this.purposeBanner) {
+      this.purposeBanner.textContent = isEs
+        ? '[?] PROPÓSITO: Reproduce la evolución temporal del software commit a commit. Observa en el mapa 2.5D cómo nacieron los módulos y cómo cambió la salud arquitectónica en cada era.'
+        : '[?] PURPOSE: Replay historical software evolution commit-by-commit. Watch the 2.5D citadel expand organically and track how architectural health shifted across eras.';
+    }
+
+    const hlthTxt = document.getElementById('tl-lbl-health-txt');
+    if (hlthTxt) hlthTxt.textContent = isEs ? 'SALUD:' : 'HEALTH:';
+
     this.renderCurrentCommit();
   }
 }

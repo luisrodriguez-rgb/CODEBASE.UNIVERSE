@@ -18,7 +18,15 @@ export class GameState {
     this.unlockedCodeDex = new Set();
     this.simulationState = null;
     this.activeCommitGen = null;
+    this.activeTimelineCommit = null;
+    this.timelineActiveNodeIds = null;
     this.listeners = new Set();
+  }
+
+  setTimelineCommit(commit) {
+    this.activeTimelineCommit = commit;
+    this.timelineActiveNodeIds = commit ? commit.activeNodeIds : null;
+    this.notify('timeline_commit_changed', { commit });
   }
 
   setGraph(graph, analysis, quests) {

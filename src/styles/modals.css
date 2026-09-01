@@ -1894,8 +1894,8 @@
   left: 50%;
   transform: translateX(-50%);
   width: auto;
-  min-width: 520px;
-  max-width: 600px;
+  min-width: 560px;
+  max-width: 640px;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -1908,15 +1908,15 @@
 }
 
 .tm-cyber-card {
-  background: rgba(8, 14, 26, 0.95);
+  background: rgba(8, 14, 26, 0.96);
   border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: 8px;
   padding: 14px 18px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9), 0 0 24px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(56, 189, 248, 0.2);
-  backdrop-filter: blur(20px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.95), 0 0 24px rgba(56, 189, 248, 0.18), inset 0 1px 0 rgba(56, 189, 248, 0.2);
+  backdrop-filter: blur(24px);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .tm-card-header {
@@ -1941,10 +1941,156 @@
 
 .tm-title-text {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: 0.06em;
+}
+
+/* Purpose Explanation Banner */
+.tm-purpose-banner {
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 9.5px;
+  color: #bae6fd;
+  line-height: 1.35;
+  font-family: var(--font-mono);
+}
+
+/* Commit Dossier Section */
+.tm-commit-dossier {
+  background: rgba(4, 7, 14, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dossier-top-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.commit-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.dossier-hash {
+  color: var(--accent-cyan);
+  font-weight: 800;
+}
+
+.dossier-date {
+  color: var(--text-secondary);
+}
+
+.dossier-author {
+  color: var(--accent-amber);
+}
+
+.meta-separator {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.commit-health-box {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+}
+
+.health-lbl {
+  color: var(--text-muted);
+}
+
+.health-val {
+  color: #10b981;
+}
+
+.health-badge {
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 8.5px;
+  font-weight: 800;
+}
+
+.health-badge.good { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+.health-badge.warn { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+.health-badge.debt { background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }
+
+.dossier-msg {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+  font-family: var(--font-mono);
+  line-height: 1.35;
+}
+
+.dossier-population-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.population-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+
+.dossier-pop-text {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Quick Era Chips */
+.tm-era-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.era-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.era-chip:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #ffffff;
+}
+
+.era-chip.active {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
 }
 
 /* Graph Section */

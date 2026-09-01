@@ -448,6 +448,12 @@ export class GraphWorld {
 
     // Grouping for edge bundling (avoids laser floodlight)
     for (const edge of graph.edges) {
+      if (state.timelineActiveNodeIds) {
+        if (!state.timelineActiveNodeIds.has(edge.source) || !state.timelineActiveNodeIds.has(edge.target)) {
+          continue; // Skip conduits for unborn nodes in this historical commit
+        }
+      }
+
       const src = graph.getNode(edge.source);
       const tgt = graph.getNode(edge.target);
       if (!src || !tgt) continue;
@@ -564,9 +570,13 @@ export class GraphWorld {
 
       if (!visible && !isSelected && !isHovered) continue;
 
-      // Contextual Subsystem Focus Dimming
+      // Contextual Subsystem Focus Dimming & Historical Timeline Masking
+      const isTimelineActive = !state.timelineActiveNodeIds || state.timelineActiveNodeIds.has(node.id);
+
       ctx.save();
-      if (activeTarget) {
+      if (!isTimelineActive) {
+        ctx.globalAlpha = 0.04; // Unborn building in this historical commit
+      } else if (activeTarget) {
         if (connectedNeighbors.has(node.id)) {
           ctx.globalAlpha = 1.0;
         } else {
