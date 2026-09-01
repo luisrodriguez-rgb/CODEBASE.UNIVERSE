@@ -25,11 +25,11 @@ export const TRANSLATIONS = {
     landing_tagline: 'Explore. Understand. Simulate.',
     landing_subtext: 'Transform your software repositories into living 2.5D architectural citadels and interactive simulation worlds.',
     
-    portal_card_gh_title: '01 // GITHUB CLOUD IMPORTER',
+    portal_card_gh_title: 'GITHUB CLOUD IMPORTER',
     portal_card_gh_desc: 'Connect public repositories or authenticate with a token to import and parse real Git trees in real-time.',
-    portal_card_cbm_title: '02 // LOCAL & CBM ENGINE',
-    portal_card_cbm_desc: 'Scan your local workspace with Tree-sitter & Codebase-Memory-MCP (162 languages, Hybrid LSP type resolution).',
-    portal_card_demo_title: '03 // ARCHITECTURAL PRESET WORLDS',
+    portal_card_cbm_title: 'LOCAL & CBM ENGINE',
+    portal_card_cbm_desc: 'Scan your local workspace with Tree-sitter & Codebase-Memory-MCP (162 languages, SQLite cache, Hybrid LSP).',
+    portal_card_demo_title: 'ARCHITECTURAL PRESETS & AST',
     portal_card_demo_desc: 'Launch pre-computed architectural simulation universes or drop custom graph AST JSON files.',
 
     portal_btn_gh_import: '[>] IMPORT REPOSITORY',
@@ -242,11 +242,11 @@ export const TRANSLATIONS = {
     landing_tagline: 'Explora. Comprende. Simula.',
     landing_subtext: 'Transforma tus repositorios de software en ciudadelas arquitectónicas 2.5D y mundos de simulación interactivos.',
     
-    portal_card_gh_title: '01 // IMPORTADOR GITHUB CLOUD',
+    portal_card_gh_title: 'IMPORTADOR GITHUB CLOUD',
     portal_card_gh_desc: 'Conecta repositorios públicos o autentícate con un token para importar y parsear árboles de Git en tiempo real.',
-    portal_card_cbm_title: '02 // MOTOR LOCAL & CBM',
-    portal_card_cbm_desc: 'Escanea tu espacio local con Tree-sitter y Codebase-Memory-MCP (162 lenguajes, resolución de tipos Hybrid LSP).',
-    portal_card_demo_title: '03 // MUNDOS ARQUITECTÓNICOS PREDEFINIDOS',
+    portal_card_cbm_title: 'MOTOR LOCAL & CBM',
+    portal_card_cbm_desc: 'Escanea tu espacio local con Tree-sitter y Codebase-Memory-MCP (162 lenguajes, caché SQLite, Hybrid LSP).',
+    portal_card_demo_title: 'UNIVERSOS PRESET & AST',
     portal_card_demo_desc: 'Lanza universos de simulación precalculados o arrastra archivos JSON de grafos y AST personalizados.',
 
     portal_btn_gh_import: '[>] IMPORTAR REPOSITORIO',
