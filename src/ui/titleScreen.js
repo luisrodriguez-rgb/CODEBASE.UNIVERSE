@@ -1,9 +1,11 @@
 /**
  * Splash & Universe Selector Controller for CODEBASE.UNIVERSE.
+ * ZERO EMOJIS.
  */
 
 import { sfx } from '../audio/soundFX.js';
 import { i18n } from '../i18n/translations.js';
+import { CodeGraph } from '../analysis/graph.js';
 
 export class TitleScreenController {
   constructor(onStartCallback, onDatasetSelectCallback) {
@@ -27,11 +29,27 @@ export class TitleScreenController {
       if (this.onStart) this.onStart();
     });
 
-    this.projectSelect?.addEventListener('change', (e) => {
+    this.projectSelect?.addEventListener('change', async (e) => {
       sfx.playClick();
       const val = e.target.value;
       if (val === 'custom') {
         this.customBox?.classList.remove('hidden');
+      } else if (val === 'live_scan') {
+        this.customBox?.classList.add('hidden');
+        try {
+          const res = await fetch('/api/scan');
+          if (res.ok) {
+            const raw = await res.json();
+            const graph = new CodeGraph();
+            for (const n of raw.nodes) graph.addNode(n);
+            for (const e of raw.edges) graph.addEdge(e);
+            if (this.onDatasetSelect) {
+              this.onDatasetSelect('custom_raw', graph);
+            }
+          }
+        } catch (err) {
+          console.warn('Live scan endpoint not available, falling back.');
+        }
       } else {
         this.customBox?.classList.add('hidden');
         if (this.onDatasetSelect) {
@@ -47,13 +65,19 @@ export class TitleScreenController {
     this.fileInput?.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
-        sfx.playDiscovery();
+        sfx.playVictory();
         const reader = new FileReader();
         reader.onload = (event) => {
           try {
             const customData = JSON.parse(event.target.result);
+            const graph = new CodeGraph();
+            const nodes = customData.nodes || [];
+            const edges = customData.edges || [];
+            for (const n of nodes) graph.addNode(n);
+            for (const e of edges) graph.addEdge(e);
+
             if (this.onDatasetSelect) {
-              this.onDatasetSelect('custom_raw', customData);
+              this.onDatasetSelect('custom_raw', graph);
             }
           } catch (err) {
             alert('Invalid JSON file format.');

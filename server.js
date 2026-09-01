@@ -2,6 +2,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { LocalRepositoryScanner } from './src/indexer/localScanner.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,7 +21,27 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
-  let reqPath = req.url.split('?')[0];
+  const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+  const pathname = parsedUrl.pathname;
+
+  // Dynamic Ingestion API endpoint
+  if (pathname === '/api/scan') {
+    const scanPath = parsedUrl.searchParams.get('dir') || __dirname;
+    try {
+      const graphData = LocalRepositoryScanner.scanDirectory(scanPath);
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-cache'
+      });
+      res.end(JSON.stringify(graphData));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  let reqPath = pathname;
   if (reqPath === '/') reqPath = '/index.html';
 
   const filePath = path.join(__dirname, reqPath);
@@ -47,5 +68,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`CODEBASE MEMORY server running at http://localhost:${PORT}`);
+  console.log(`CODEBASE.UNIVERSE server running at http://localhost:${PORT}`);
 });

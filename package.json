@@ -1,10 +1,25 @@
 {
-  "name": "codebase-memory",
-  "private": true,
-  "version": "1.0.0",
+  "name": "codebase-universe",
+  "version": "2.5.0",
+  "description": "The Architectural Sci-Fi Simulation Engine for Software Repositories",
   "type": "module",
+  "main": "src/main.js",
+  "bin": {
+    "codebase-universe": "./bin/cli.js"
+  },
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js"
-  }
+  },
+  "keywords": [
+    "architecture",
+    "simulation",
+    "codebase",
+    "visualization",
+    "ast",
+    "mcp",
+    "refactoring"
+  ],
+  "author": "Luis Felipe Rodriguez",
+  "license": "MIT"
 }
