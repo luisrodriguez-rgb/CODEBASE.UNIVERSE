@@ -1,6 +1,9 @@
 /**
  * CODEBASE.UNIVERSE - Main Application Bootstrap.
  * Connects Analysis Engine, Game Simulation, 2.5D Canvas, Web Audio, i18n, and Cyber Decks.
+ * Single-instance initialization preventing duplicate event listeners.
+ *
+ * ZERO EMOJIS.
  */
 
 import { buildSketionGraph } from './data/sketionDataset.js';
@@ -33,11 +36,13 @@ class CodebaseUniverseApp {
     this.eventManager = null;
     this.views = {};
     this.hud = null;
+    this.initialized = false;
 
     this.init();
   }
 
   init() {
+    // 1. Single-instance Modal & Controller Bindings
     this.manualModal = new ManualModal();
 
     this.githubModal = new GitHubModalController((projectKey, customGraph, projectName) => {
@@ -55,13 +60,39 @@ class CodebaseUniverseApp {
       }
     );
 
-    // Initial default project load behind splash
+    // Initial project load
     this.loadProject('sketion');
+
+    // 2. Attach Global UI Event Listeners Once
+    document.getElementById('btn-open-trace-path')?.addEventListener('click', () => {
+      this.views.tracePath?.open();
+    });
+
+    document.getElementById('zoom-in-btn')?.addEventListener('click', () => {
+      if (this.world?.camera) {
+        this.world.camera.targetZoom = Math.min(12.0, this.world.camera.targetZoom * 1.35);
+      }
+    });
+
+    document.getElementById('zoom-out-btn')?.addEventListener('click', () => {
+      if (this.world?.camera) {
+        this.world.camera.targetZoom = Math.max(0.05, this.world.camera.targetZoom * 0.75);
+      }
+    });
+
+    document.getElementById('zoom-reset-btn')?.addEventListener('click', () => {
+      this.world?.camera?.reset();
+    });
+
+    this.initialized = true;
   }
 
   loadProject(projectKey, customGraph = null, customName = null) {
     if (this.world) {
       this.world.stop();
+    }
+    if (this.eventManager) {
+      this.eventManager.stopEventSimulation?.();
     }
 
     let graph;
@@ -100,7 +131,7 @@ class CodebaseUniverseApp {
     this.world = new GraphWorld(this.canvas, this.minimapCanvas, graph, analysis, globalState);
     this.world.start();
 
-    // 4. Initialize Views with world integration
+    // 4. Initialize or update Views
     this.views.inspector = new InspectorController(globalState, this.world.camera, this.world);
     this.views.codedex = new CodeDexViewController(globalState, this.world.camera);
     this.views.quests = new QuestViewController(globalState, this.world.camera);
@@ -113,24 +144,13 @@ class CodebaseUniverseApp {
     this.eventManager = new ArchitecturalEventManager(globalState, this.world.camera);
     this.eventManager.startEventSimulation();
 
-    // 6. Initialize HUD Coordinator
-    this.hud = new HudController(globalState, this.manualModal, this.world, this.githubModal);
-
-    // Connect Trace Path Launcher Button
-    document.getElementById('btn-open-trace-path')?.addEventListener('click', () => {
-      this.views.tracePath.open();
-    });
-
-    // Connect Camera Zoom Buttons
-    document.getElementById('zoom-in-btn')?.addEventListener('click', () => {
-      this.world.camera.targetZoom = Math.min(12.0, this.world.camera.targetZoom * 1.35);
-    });
-    document.getElementById('zoom-out-btn')?.addEventListener('click', () => {
-      this.world.camera.targetZoom = Math.max(0.05, this.world.camera.targetZoom * 0.75);
-    });
-    document.getElementById('zoom-reset-btn')?.addEventListener('click', () => {
-      this.world.camera.reset();
-    });
+    // 6. Initialize or Refresh HUD Coordinator
+    if (!this.hud) {
+      this.hud = new HudController(globalState, this.manualModal, this.world, this.githubModal);
+    } else {
+      this.hud.world = this.world;
+      this.hud.updateTelemetryMetrics();
+    }
   }
 }
 

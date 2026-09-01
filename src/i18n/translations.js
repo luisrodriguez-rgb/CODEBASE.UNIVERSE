@@ -439,7 +439,11 @@ class I18nService {
 
   notify() {
     for (const cb of this.listeners) {
-      cb(this.currentLang);
+      try {
+        cb(this.currentLang);
+      } catch (err) {
+        console.error('i18n listener error:', err);
+      }
     }
   }
 }
