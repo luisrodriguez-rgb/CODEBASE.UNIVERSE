@@ -102,18 +102,40 @@ export class HudController {
       sfx.playClick();
       if (this.manualModal) {
         this.manualModal.open();
+      } else {
+        const mm = document.getElementById('manual-modal');
+        const bd = document.getElementById('modal-backdrop');
+        if (mm) mm.classList.remove('hidden');
+        if (bd) bd.classList.remove('hidden');
       }
     });
 
-    // Switch Project / GitHub Cloud Explorer Trigger
+    // Switch Project / Command Center Landing Trigger
     this.switchProjectBtn?.addEventListener('click', () => {
       sfx.playClick();
-      if (this.githubModal) {
-        this.githubModal.open();
+      if (window.app?.titleScreen) {
+        window.app.titleScreen.show();
       } else {
         const splash = document.getElementById('title-screen');
-        if (splash) splash.classList.remove('hidden');
+        if (splash) {
+          splash.classList.remove('hidden');
+          splash.style.display = 'flex';
+        }
       }
+    });
+
+    // Global Modal Close Button Listeners ([X])
+    document.querySelectorAll('.modal-close-btn, [data-close]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        sfx.playClick();
+        const targetId = btn.getAttribute('data-close');
+        if (targetId) {
+          document.getElementById(targetId)?.classList.add('hidden');
+        } else {
+          btn.closest('.deck-modal')?.classList.add('hidden');
+        }
+        document.getElementById('modal-backdrop')?.classList.add('hidden');
+      });
     });
 
     // Backdrop Click

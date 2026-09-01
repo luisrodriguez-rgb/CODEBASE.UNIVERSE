@@ -27,6 +27,7 @@ export class TitleScreenController {
   initElements() {
     this.langToggleBtn = document.getElementById('landing-lang-toggle-btn');
     this.soundToggleBtn = document.getElementById('landing-sound-toggle-btn');
+    this.closeBtn = document.getElementById('close-title-screen-btn');
 
     // Card 1: GitHub Cloud
     this.ghSlugInput = document.getElementById('landing-gh-slug-input');
@@ -50,6 +51,18 @@ export class TitleScreenController {
   }
 
   initEvents() {
+    // 0. Close Button Action
+    this.closeBtn?.addEventListener('click', () => {
+      sfx.playClick();
+      this.hide();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.container && !this.container.classList.contains('hidden')) {
+        this.hide();
+      }
+    });
+
     // 1. Language Toggle
     this.langToggleBtn?.addEventListener('click', () => {
       sfx.playClick();
@@ -291,10 +304,17 @@ export class TitleScreenController {
   }
 
   show() {
-    this.container?.classList.remove('hidden');
+    if (this.container) {
+      this.container.classList.remove('hidden');
+      this.container.style.display = 'flex';
+      sfx.playClick();
+    }
   }
 
   hide() {
-    this.container?.classList.add('hidden');
+    if (this.container) {
+      this.container.classList.add('hidden');
+      this.container.style.display = 'none';
+    }
   }
 }
