@@ -62,28 +62,26 @@ export class QuestViewController {
     } else if (this.activeCategory === 'daily') {
       filtered = quests.filter(q => q.category === 'daily');
     } else if (this.activeCategory === 'detective') {
-      filtered = []; // Render incident cases
-    }
-
-    if (this.activeCategory === 'detective') {
       this.renderDetectiveCases();
       return;
     }
 
     this.listContainer.innerHTML = filtered.map(q => {
+      const code = q.code || 'QST #01';
       const title = isEs ? (q.title_es || q.title) : q.title;
       const desc = isEs ? (q.description_es || q.description) : q.description;
       const hint = isEs ? (q.hint_es || q.hint) : q.hint;
+      const reward = q.rewardXP || q.rewardXp || 500;
 
       return `
         <div class="quest-card ${q.completed ? 'completed' : ''}" data-quest-id="${q.id}">
           <div class="quest-info">
-            <div class="quest-title">${q.completed ? '✓ ' : ''}${q.code} // ${title}</div>
+            <div class="quest-title">${q.completed ? '[DONE] ' : ''}${code} // ${title}</div>
             <div class="quest-desc">${desc}</div>
             <div class="quest-hint">${i18n.t('quest_hint_prefix')} ${hint}</div>
           </div>
           <div class="quest-action-col">
-            <span class="quest-reward">+${q.rewardXP} XP</span>
+            <span class="quest-reward">+${reward} XP</span>
             <button class="quest-track-btn ${q.completed ? 'completed' : ''}" data-track-id="${q.id}">
               ${q.completed ? i18n.t('btn_completed') : i18n.t('btn_track')}
             </button>
@@ -97,13 +95,13 @@ export class QuestViewController {
         sfx.playClick();
         const qId = btn.getAttribute('data-track-id');
         const quest = quests.find(q => q.id === qId);
-        if (quest && quest.targetNodeId) {
-          const targetNode = this.state.graph.getNode(quest.targetNodeId);
+        const targetId = quest?.targetNodeId || quest?.targetId;
+        if (quest && targetId) {
+          const targetNode = this.state.graph.getNode(targetId);
           if (targetNode) {
-            // Close modal, focus camera on target node, and complete quest
             this.container?.classList.add('hidden');
             document.getElementById('modal-backdrop')?.classList.add('hidden');
-            this.state.setSelectedNode(quest.targetNodeId);
+            this.state.setSelectedNode(targetId);
             this.camera.centerOn(targetNode.x, targetNode.y, 3.5);
             sfx.playVictory();
             this.state.completeQuest(qId);
@@ -121,30 +119,32 @@ export class QuestViewController {
     }
 
     this.listContainer.innerHTML = this.incidentCases.map(c => {
+      const code = c.code || 'CASE #01';
       const title = isEs ? c.title_es : c.title;
       const desc = isEs ? c.description_es : c.description;
       const clues = isEs ? c.clues_es : c.clues;
+      const reward = c.rewardXp || c.rewardXP || 800;
 
       return `
         <div class="quest-card ${c.solved ? 'completed' : ''}" data-case-id="${c.id}">
           <div class="quest-info" style="max-width:68%">
-            <div class="quest-title" style="color:var(--accent-rose)">${c.solved ? '✓ SOLVED // ' : '🚨 '}${c.code} // ${title}</div>
+            <div class="quest-title" style="color:var(--accent-rose)">${c.solved ? '[SOLVED] ' : '[INCIDENT] '}${code} // ${title}</div>
             <div class="quest-desc">${desc}</div>
             <div style="margin-top:8px;font-size:10.5px;color:var(--text-muted);display:flex;flex-direction:column;gap:3px;">
-              ${clues.map(clue => `<span>• ${clue}</span>`).join('')}
+              ${clues.map(clue => `<span>- ${clue}</span>`).join('')}
             </div>
             <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
               <span style="font-size:10px;font-weight:700;color:var(--text-muted)">SUSPECTS:</span>
               ${c.suspects.map(s => `
                 <button class="suspect-btn" data-case-id="${c.id}" data-suspect-id="${s.id}" style="background:rgba(23,32,51,0.8);border:1px solid var(--border-subtle);color:#fff;font-size:10px;padding:4px 8px;border-radius:3px;cursor:pointer;">
-                  🔍 ${s.name}
+                  [?] ${s.name}
                 </button>
               `).join('')}
             </div>
           </div>
           <div class="quest-action-col">
-            <span class="quest-reward">+${c.rewardXp} XP</span>
-            <span class="badge ${c.solved ? 'highlight' : 'threat-badge'}">${c.solved ? 'CASE RESOLVED' : 'ACTIVE INVESTIGATION'}</span>
+            <span class="quest-reward">+${reward} XP</span>
+            <span class="badge ${c.solved ? 'highlight' : 'threat-badge'}">${c.solved ? 'RESOLVED' : 'ACTIVE'}</span>
           </div>
         </div>
       `;
@@ -163,14 +163,14 @@ export class QuestViewController {
             sfx.playVictory();
             this.state.knowledgeTracker.addXP(incidentCase.rewardXp);
             alert(isEs
-              ? `¡CASO RESUELTO! Identificaste correctamente el módulo causante del fallo (${suspectId}). Recompensa: +${incidentCase.rewardXp} XP.`
-              : `CASE RESOLVED! You correctly identified the root cause module (${suspectId}). Reward: +${incidentCase.rewardXp} XP.`
+              ? `CASO RESUELTO: Identificaste correctamente el modulo causante del fallo (${suspectId}). Recompensa: +${incidentCase.rewardXp} XP.`
+              : `CASE RESOLVED: You correctly identified the root cause module (${suspectId}). Reward: +${incidentCase.rewardXp} XP.`
             );
             this.renderDetectiveCases();
           } else {
             sfx.playAlarm();
             alert(isEs
-              ? `PISTA ERRÓNEA: El módulo ${suspectId} tiene dependencias sanas y no es el origen del incidente. Revisa las pistas de centralidad y riesgo.`
+              ? `PISTA ERRONEA: El modulo ${suspectId} tiene dependencias sanas y no es el origen del incidente. Revisa las pistas de centralidad y riesgo.`
               : `FALSE LEAD: Module ${suspectId} has healthy topology and is not the culprit. Check the risk and centrality clues.`
             );
           }

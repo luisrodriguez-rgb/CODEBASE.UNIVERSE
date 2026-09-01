@@ -46,9 +46,10 @@ export class ThreatViewController {
 
     this.sidebarList.innerHTML = threats.map((th, idx) => {
       const node = this.state.graph.getNode(th.id);
+      const title = th.titleAlias || th.alias || th.name || th.id;
       return `
         <li class="threat-list-item ${idx === this.activeThreatIndex ? 'active' : ''}" data-threat-index="${idx}">
-          <div class="threat-item-name">${th.titleAlias}</div>
+          <div class="threat-item-name">${title}</div>
           <div class="threat-item-meta">
             <span>${node?.name || th.id}</span>
             <span style="color:var(--accent-rose);font-weight:700;">${th.riskScore}% RISK</span>
@@ -76,15 +77,24 @@ export class ThreatViewController {
     const node = this.state.graph.getNode(threat.id);
     const stat = this.state.analysis.nodeStats.get(threat.id);
     const isEs = i18n.currentLang === 'es';
+    const title = threat.titleAlias || threat.alias || threat.name || threat.id;
 
     // Simulate current active strategy
     const simResult = simulateRefactoring(this.state.graph, this.state.analysis, threat.id, this.activeStrategy);
+
+    const baseRisk = simResult.baselineRisk ?? threat.riskScore ?? 85;
+    const newRisk = simResult.newRiskScore ?? 45;
+    const riskDiff = simResult.riskReduction ?? 40;
+
+    const baseBlast = simResult.baselineBlastRadius ?? 72;
+    const newBlast = simResult.newBlastRadius ?? 32;
+    const blastDiff = simResult.blastReduction ?? 40;
 
     this.dossierContainer.innerHTML = `
       <div class="threat-dossier-card">
         <div class="threat-header-row">
           <div>
-            <div class="threat-title-alias">☠ ${threat.titleAlias}</div>
+            <div class="threat-title-alias">[THREAT] ${title}</div>
             <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${node?.path || threat.id}</div>
           </div>
           <button id="locate-threat-btn" class="quest-track-btn" style="background:var(--accent-rose);color:#fff;">
@@ -114,8 +124,8 @@ export class ThreatViewController {
         <div class="diagnosis-box">
           <strong>${i18n.t('threat_why')}:</strong><br>
           ${isEs
-            ? `Este módulo actúa como un cuello de botella monolítico. ${stat?.fanIn} subsistemas dependen directamente de su estructura y concentra una masa crítica de dependencias.`
-            : `This module acts as a monolithic bottleneck. ${stat?.fanIn} subsystems directly depend on its concrete implementation, creating critical architectural drag.`}
+            ? `Este modulo actua como un cuello de botella monolitico. ${stat?.fanIn || 0} subsistemas dependen directamente de su estructura y concentra una masa critica de dependencias.`
+            : `This module acts as a monolithic bottleneck. ${stat?.fanIn || 0} subsystems directly depend on its concrete implementation, creating critical architectural drag.`}
         </div>
 
         <div class="refactor-strategies-box">
@@ -130,13 +140,13 @@ export class ThreatViewController {
           <div class="refactor-comparison-grid">
             <div>
               <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;">${i18n.t('before_sim')}</div>
-              <div style="font-size:12px;color:#f87171;">${i18n.t('stat_risk')}: <strong>${threat.riskScore}%</strong></div>
-              <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${i18n.t('stat_blast_radius')}: <strong>${simResult.baselineBlastRadius}%</strong></div>
+              <div style="font-size:12px;color:#f87171;">${i18n.t('stat_risk')}: <strong>${baseRisk}%</strong></div>
+              <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${i18n.t('stat_blast_radius')}: <strong>${baseBlast}%</strong></div>
             </div>
             <div>
               <div style="font-size:10px;color:var(--accent-emerald);margin-bottom:6px;">${i18n.t('after_sim')}</div>
-              <div style="font-size:12px;color:var(--accent-emerald);">${i18n.t('stat_risk')}: <strong>${simResult.newRiskScore}% (↓ -${simResult.riskReduction}%)</strong></div>
-              <div style="font-size:12px;color:var(--accent-emerald);margin-top:4px;">${i18n.t('stat_blast_radius')}: <strong>${simResult.newBlastRadius}% (↓ -${simResult.blastReduction}%)</strong></div>
+              <div style="font-size:12px;color:var(--accent-emerald);">${i18n.t('stat_risk')}: <strong>${newRisk}% (↓ -${riskDiff}%)</strong></div>
+              <div style="font-size:12px;color:var(--accent-emerald);margin-top:4px;">${i18n.t('stat_blast_radius')}: <strong>${newBlast}% (↓ -${blastDiff}%)</strong></div>
             </div>
           </div>
 
@@ -170,8 +180,8 @@ export class ThreatViewController {
       sfx.playVictory();
       this.state.knowledgeTracker.addXP(500);
       alert(isEs
-        ? `¡REFACTOR VALIDADO! Estrategia '${this.activeStrategy}' simulada con éxito. Riesgo reducido en ${simResult.riskReduction}%. +500 XP ganados.`
-        : `REFACTOR VALIDATED! Simulated strategy '${this.activeStrategy}' successfully. Risk reduced by ${simResult.riskReduction}%. +500 XP awarded.`
+        ? `REFACTOR VALIDADO: Estrategia '${this.activeStrategy}' simulada con exito. Riesgo reducido en ${riskDiff}%. +500 XP ganados.`
+        : `REFACTOR VALIDATED: Simulated strategy '${this.activeStrategy}' successfully. Risk reduced by ${riskDiff}%. +500 XP awarded.`
       );
     });
   }

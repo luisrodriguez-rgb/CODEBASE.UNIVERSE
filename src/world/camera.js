@@ -1,6 +1,6 @@
 /**
- * High-Precision Camera Controller with Deep Zoom (0.05x - 12.0x),
- * Exact Cursor-Anchored Scaling, and Keyboard Navigation (WASD/Arrows).
+ * Silky-Smooth Camera Controller with Continuous Exponential Zoom,
+ * Precise Trackpad/Mouse Wheel scaling, and WASD/Arrow Navigation.
  */
 
 export class WorldCamera {
@@ -9,8 +9,8 @@ export class WorldCamera {
     this.x = 0;
     this.y = 0;
     this.zoom = 0.85;
-    this.minZoom = 0.05; // Wide galaxy view
-    this.maxZoom = 12.0; // Deep function detail view
+    this.minZoom = 0.04;
+    this.maxZoom = 15.0;
 
     this.isDragging = false;
     this.lastMouseX = 0;
@@ -26,9 +26,9 @@ export class WorldCamera {
   }
 
   initEvents() {
-    // Mouse Pan Drag
+    // Mouse Drag Pan
     this.canvas.addEventListener('mousedown', (e) => {
-      if (e.button === 0 || e.button === 1) { // Left or Middle click
+      if (e.button === 0 || e.button === 1) {
         this.isDragging = true;
         this.lastMouseX = e.clientX;
         this.lastMouseY = e.clientY;
@@ -52,7 +52,7 @@ export class WorldCamera {
       this.isDragging = false;
     });
 
-    // Deep Exponential Cursor-Anchored Zoom
+    // Silky Smooth Exponential Cursor-Anchored Zoom (Supports Mac Trackpad Pinch & Mouse Wheel)
     this.canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
       
@@ -60,16 +60,17 @@ export class WorldCamera {
       const cursorScreenX = e.clientX - rect.left;
       const cursorScreenY = e.clientY - rect.top;
 
-      // Mouse position in world coordinates before zoom
+      // Position in world space before zoom
       const worldBefore = this.screenToWorld(cursorScreenX, cursorScreenY);
 
-      // Smooth exponential factor
-      const zoomFactor = e.deltaY < 0 ? 1.22 : 0.82;
+      // Continuous exponential scaling (normalized for discrete clicks and fluid trackpad gestures)
+      const clampedDelta = Math.max(-120, Math.min(120, e.deltaY));
+      const zoomFactor = Math.exp(-clampedDelta * 0.0035);
       const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.targetZoom * zoomFactor));
 
       this.targetZoom = newZoom;
 
-      // Re-anchor camera target so the point under the cursor stays fixed in world space
+      // Re-anchor camera target so point under cursor remains perfectly stationary
       const cx = cursorScreenX - rect.width / 2;
       const cy = cursorScreenY - rect.height / 2;
 
@@ -77,7 +78,7 @@ export class WorldCamera {
       this.targetY = -(worldBefore.y - cy / newZoom);
     }, { passive: false });
 
-    // Keyboard Pan Navigation (WASD / Arrows)
+    // Keyboard Pan
     window.addEventListener('keydown', (e) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
       this.keys[e.key.toLowerCase()] = true;
@@ -106,7 +107,7 @@ export class WorldCamera {
     };
   }
 
-  centerOn(worldX, worldY, zoomLevel = 3.0) {
+  centerOn(worldX, worldY, zoomLevel = 3.5) {
     this.targetX = -worldX;
     this.targetY = -worldY;
     this.targetZoom = Math.min(this.maxZoom, Math.max(this.minZoom, zoomLevel));
@@ -119,8 +120,7 @@ export class WorldCamera {
   }
 
   update() {
-    // Process continuous keyboard panning
-    const panSpeed = 24 / this.zoom;
+    const panSpeed = 26 / this.zoom;
     if (this.keys['w'] || this.keys['arrowup']) {
       this.targetY += panSpeed;
       this.y += panSpeed;
@@ -138,10 +138,10 @@ export class WorldCamera {
       this.x -= panSpeed;
     }
 
-    // High-performance smooth camera lerping
-    this.x += (this.targetX - this.x) * 0.16;
-    this.y += (this.targetY - this.y) * 0.16;
-    this.zoom += (this.targetZoom - this.zoom) * 0.16;
+    // High performance smooth lerping
+    this.x += (this.targetX - this.x) * 0.18;
+    this.y += (this.targetY - this.y) * 0.18;
+    this.zoom += (this.targetZoom - this.zoom) * 0.18;
   }
 
   getSemanticZoomTier() {

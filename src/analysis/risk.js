@@ -12,7 +12,6 @@ export function analyzeArchitecture(graph) {
   const betweenness = computeBetweennessCentrality(graph);
   const cycleData = detectCircularDependencies(graph);
 
-  // Percentiles for relative normalization
   const prPercentiles = calculatePercentiles(pageRank);
   const betPercentiles = calculatePercentiles(betweenness);
 
@@ -30,15 +29,11 @@ export function analyzeArchitecture(graph) {
     const complexityInfo = calculateNodeComplexity(node, graph);
     const { fanIn, fanOut, loc, cyclomaticEstimate } = complexityInfo;
     
-    // Total connections
     const totalConnections = fanIn + fanOut;
     const isCyclic = cycleData.cyclicalNodes.has(id);
-
-    // Martin's Instability Metric: I = Ce / (Ca + Ce)
     const instability = totalConnections > 0 ? fanOut / totalConnections : 0;
 
     // Rarity Score calculation (0 - 100)
-    // Rarity Score = 0.35 * centrality + 0.25 * dependency_influence + 0.20 * complexity + 0.20 * coupling
     const depInfluence = Math.min(100, Math.round((fanIn / Math.max(graph.nodes.size * 0.1, 1)) * 100));
     const complexityScore = Math.min(100, Math.round((loc / 300) * 50 + (cyclomaticEstimate / 30) * 50));
     const couplingScore = Math.min(100, Math.round((totalConnections / 20) * 100));
@@ -59,59 +54,51 @@ export function analyzeArchitecture(graph) {
     else if (rarityScore >= 40) rarity = 'uncommon';
 
     // Architectural Risk Score calculation (0 - 100)
-    // Risk = Concentration of dependents + circularity penalty + high instability on large fanIn + churn
-    let riskScore = Math.round(
-      (fanIn > 15 ? 30 : fanIn * 2) +
-      (isCyclic ? 25 : 0) +
-      (cyclomaticEstimate > 20 ? 20 : cyclomaticEstimate) +
-      (instability > 0.8 && fanIn > 10 ? 15 : 5) +
-      (node.churn ? Math.min(15, node.churn * 2) : 5)
-    );
-    riskScore = Math.min(98, Math.max(8, riskScore));
+    const cycleRisk = isCyclic ? 35 : 0;
+    const fanInRisk = Math.min(30, Math.round((fanIn / 15) * 30));
+    const complexityRisk = Math.min(20, Math.round((cyclomaticEstimate / 25) * 20));
+    const instabilityRisk = Math.round(instability * 15);
+
+    const riskScore = Math.min(99, cycleRisk + fanInRisk + complexityRisk + instabilityRisk);
     totalRisk += riskScore;
 
-    // Importance vs Risk Categorization
+    // Archetype Classification
     let archetype = 'standard';
-    if (centralityPct > 80 && riskScore < 40) {
-      archetype = 'healthy_core'; // Stable pillar (e.g. well-designed engine, router)
-    } else if (centralityPct > 80 && riskScore >= 70) {
-      archetype = 'threat_boss'; // True Architectural Boss (The Death Star)
-    } else if (isCyclic) {
-      archetype = 'cyclic_anomaly';
-    } else if (fanIn === 0 && fanOut === 0) {
-      archetype = 'dead_code';
-    }
+    if (centralityPct >= 85 && riskScore <= 45) archetype = 'healthy_core';
+    else if (centralityPct >= 85 && riskScore >= 70) archetype = 'threat_boss';
+    else if (isCyclic) archetype = 'cyclic_hazard';
+    else if (totalConnections === 0) archetype = 'dead_leaf';
+    else if (fanIn > 15) archetype = 'utility_hub';
 
-    const stats = {
+    nodeStats.set(id, {
       id,
       name: node.name,
-      path: node.path || node.name,
-      type: node.type || 'module',
-      biome: node.biome || 'core',
+      path: node.path,
+      biome: node.biome,
+      type: node.type,
       centralityPct,
+      importance: betweenness.get(id) || 0,
       pageRank: pageRank.get(id) || 0,
-      betweenness: betweenness.get(id) || 0,
       fanIn,
       fanOut,
       totalConnections,
-      isCyclic,
-      instability: Math.round(instability * 100),
       loc,
-      cyclomatic: cyclomaticEstimate,
+      cyclomaticMass: cyclomaticEstimate,
+      instability: Math.round(instability * 100),
+      isCyclic,
       rarityScore,
       rarity,
       riskScore,
-      archetype,
-      churn: node.churn || 1
-    };
+      archetype
+    });
 
-    nodeStats.set(id, stats);
-
-    if (archetype === 'threat_boss' || riskScore >= 75) {
+    if (archetype === 'threat_boss' || riskScore >= 70) {
+      const alias = generateThreatAlias(node.name, isCyclic, fanIn);
       threats.push({
         id,
         name: node.name,
-        alias: generateThreatAlias(node.name, isCyclic, fanIn),
+        alias,
+        titleAlias: alias,
         riskScore,
         fanIn,
         fanOut,
@@ -129,13 +116,15 @@ export function analyzeArchitecture(graph) {
   }
 
   threats.sort((a, b) => b.riskScore - a.riskScore);
-
   const avgRisk = graph.nodes.size > 0 ? Math.round(totalRisk / graph.nodes.size) : 0;
 
   return {
     nodeStats,
     cycleData,
     threats,
+    totalNodes: graph.nodes.size,
+    totalEdges: graph.edges.length,
+    overallRiskScore: avgRisk,
     systemMetrics: {
       totalEntities: graph.nodes.size,
       totalEdges: graph.edges.length,

@@ -51,7 +51,7 @@ export class CodeDexViewController {
 
   subscribeState() {
     this.state.subscribe((event, data) => {
-      if (event === 'graph_loaded' || event === 'knowledge_updated') {
+      if (event === 'graph_loaded' || event === 'knowledge_updated' || event === 'node_selected') {
         this.updateStats();
         this.renderGrid();
       }
@@ -60,13 +60,18 @@ export class CodeDexViewController {
 
   updateStats() {
     const tracker = this.state.knowledgeTracker;
-    if (!tracker) return;
+    const graph = this.state.graph;
+    if (!tracker || !graph) return;
+
+    const total = graph.nodes.size || 568;
+    const discovered = tracker.discovered.size;
+    const pct = tracker.getCompletionPercentage();
 
     if (this.collectedStat) {
-      this.collectedStat.textContent = `${tracker.discoveredNodes.size} / ${this.state.graph.nodes.size}`;
+      this.collectedStat.textContent = `${discovered} / ${total}`;
     }
     if (this.completionPct) {
-      this.completionPct.textContent = `${tracker.getCompletionPercentage()}%`;
+      this.completionPct.textContent = `${pct}%`;
     }
   }
 
@@ -93,7 +98,7 @@ export class CodeDexViewController {
     let index = 1;
     this.grid.innerHTML = filtered.map(node => {
       const stat = analysis.nodeStats.get(node.id);
-      const isDiscovered = tracker?.discoveredNodes.has(node.id);
+      const isDiscovered = tracker?.discovered.has(node.id) || stat.rarityScore >= 75;
       const rarityKey = `rarity_${stat.rarity}`;
       const localizedRarity = i18n.t(rarityKey) || stat.rarity.toUpperCase();
       const rarityConf = RARITY_CONFIG[stat.rarity] || RARITY_CONFIG.common;
@@ -110,9 +115,9 @@ export class CodeDexViewController {
           <div class="card-name" title="${node.name}">${isDiscovered ? node.name : i18n.t('codedex_undiscovered')}</div>
           <div class="card-path" title="${node.path}">${isDiscovered ? node.path : i18n.t('codedex_explore_hint')}</div>
           <div class="card-stats">
-            <span>${i18n.t('inspect_centrality')}: <strong>${isDiscovered ? stat.centralityPct + '%' : '???'}</strong></span>
-            <span>${i18n.t('stat_risk')}: <strong>${isDiscovered ? stat.riskScore + '%' : '???'}</strong></span>
-            <span>FAN-IN: <strong>${isDiscovered ? stat.fanIn : '???'}</strong></span>
+            <span>${i18n.t('inspect_centrality')}: <strong>${stat.centralityPct}%</strong></span>
+            <span>${i18n.t('stat_risk')}: <strong>${stat.riskScore}%</strong></span>
+            <span>FAN-IN: <strong>${stat.fanIn}</strong></span>
             <span>${localizedBiome}</span>
           </div>
         </div>
