@@ -1,12 +1,16 @@
 # CODEBASE.UNIVERSE
 
 ```text
-  ██████╗ ██████╗ ██████╗ ███████╗██████╗  █████╗ ███████╗███████╗   ██╗   ██╗███╗   ██╗██╗██╗   ██╗███████╗██████╗ ███████╗███████╗
- ██╔════╝██╔═══██╗██╔══██╗██╔════╝██╔══██╗██╔══██╗██╔════╝██╔════╝   ██║   ██║████╗  ██║██║██║   ██║██╔════╝██╔══██╗██╔════╝██╔════╝
- ██║     ██║   ██║██║  ██║█████╗  ██████╔╝███████║███████╗█████╗     ██║   ██║██╔██╗ ██║██║██║   ██║█████╗  ██████╔╝███████╗█████╗  
- ██║     ██║   ██║██║  ██║██╔══╝  ██╔══██╗██╔══██║╚════██║██╔══╝     ██║   ██║██║╚██╗██║██║╚██╗ ██╔╝██╔══╝  ██╔══██╗╚════██║██╔══╝  
- ╚██████╗╚██████╔╝██████╔╝███████╗██████╔╝██║  ██║███████║███████╗   ╚██████╔╝██║ ╚████║██║ ╚████╔╝ ███████╗██║  ██║███████║███████╗
-  ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝    ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═══╝  ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝
+  ____ ___  ____  _____ ____   _    ____  _____ 
+ / ___/ _ \|  _ \| ____| __ ) / \  / ___|| ____|
+| |  | | | | | | |  _| |  _ \/ _ \ \___ \|  _|  
+| |__| |_| | |_| | |___| |_) / ___ \ ___) | |___ 
+ \____\___/|____/|_____|____/_/   \_\____/|_____|
+ _   _ _   _ _____     _______ ____  ____  _____ 
+| | | | \ | |_ _\ \   / / ____|  _ \/ ___|| ____|
+| | | |  \| || | \ \ / /|  _| | |_) \___ \|  _|  
+| |_| | |\  || |  \ V / | |___|  _ < ___) | |___ 
+ \___/|_| \_|___|  \_/  |_____|_| \_\____/|_____|
 ```
 
 > ### **Explore. Understand. Simulate.**
@@ -17,21 +21,20 @@
 ---
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                          CODEBASE.UNIVERSE // v2.5 GA                                       │
-│                                      ARCHITECTURAL INTELLIGENCE PLATFORM                                    │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                                             │
-│  [ REPOSITORY ] ──▶ [ TOPOLOGIC PARSER ] ──▶ [ CITADEL WORLD ] ──▶ [ EXPLORE ] ──▶ [ DIAGNOSE & SIMULATE ]  │
-│                                                                                                             │
-│  • Scale: 12px Functions to 110px God-Class Megastructures with Illuminated Window Matrices                 │
-│  • Zoning: 8 Domain Biomes (Core Citadel, UI Metropolis, Storage Bunker, Power Grid, API Hub, Labs, etc.)   │
-│  • Intelligence: Real-Time Betweenness Centrality, Tarjan Circular Anomalies, Blast Radius Cascades         │
-│  • Time Machine: Replay historical software growth commit-by-commit directly in the 2.5D world canvas       │
-│                                                                                                             │
-│  [ LIVE COMMAND CENTER ]                                                                                    │
-│  GitHub Cloud Importer (40+ Ecosystems) | Codebase-Memory-MCP (162 Languages) | Custom AST JSON Dropzone    │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                 CODEBASE.UNIVERSE // v2.5 GA                 │
+│              ARCHITECTURAL INTELLIGENCE PLATFORM             │
+├──────────────────────────────────────────────────────────────┤
+│ [ REPO ] ──▶ [ PARSER ] ──▶ [ CITADEL ] ──▶ [ SIMULATE ]     │
+│                                                              │
+│ • Scale: 12px Functions to 110px God-Class Megastructures    │
+│ • 8 Biomes: Core, UI, Power, Bunker, API, Labs, Hazard, Ruins│
+│ • Intelligence: Centrality, Tarjan Cycles, Blast Radius      │
+│ • Time Machine: Replay historical growth commit-by-commit    │
+│                                                              │
+│ [ LIVE INGESTION GATEWAYS ]                                  │
+│ GitHub API (40+ Ecosystems) | Tree-sitter AST | Custom JSON  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -39,7 +42,7 @@
 ## 1. Why CODEBASE.UNIVERSE?
 
 ### The "Particle Hairball" Problem
-Traditional code visualization tools dump tens of thousands of unweighted dots into a spherical force-directed cloud. While visually dazzling for five seconds, they offer **zero architectural hierarchy**, **zero actionable insight**, and **zero refactoring utility**. You cannot see where execution starts, which module is a single point of failure, or how a breaking contract change cascades downstream.
+Traditional code visualization tools dump tens of thousands of unweighted dots into a spherical force-directed cloud. While visually dazzling for five seconds, they offer **zero architectural hierarchy**, **zero actionable insight**, and **zero refactoring utility**. You cannot see where execution starts, which module is a single point of failure, or how a breaking change cascades downstream.
 
 ### The Citadela Paradigm
 **CODEBASE.UNIVERSE** treats software as a physical city:
@@ -52,20 +55,11 @@ Traditional code visualization tools dump tens of thousands of unweighted dots i
 
 ## 2. Who Is It For?
 
-```text
-┌──────────────────────────────────────┬──────────────────────────────────────────────────────────────────────┐
-│ USER PERSONA                         │ CORE VALUE & OUTCOME                                                 │
-├──────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
-│ Lead Architects & CTOs               │ Immediate macro visualization of structural coupling, cyclic debt,  │
-│                                      │ and Single Points of Failure before committing to major migrations.  │
-├──────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
-│ Engineering Teams & Onboarding Devs  │ 10x faster codebase comprehension. Learn a 500k-LOC monolith in     │
-│                                      │ minutes by walking the citadela instead of reading flat file trees.  │
-├──────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
-│ Security & Tech Debt Auditors        │ Isolate the blast radius of outages, audit historical Git drift,    │
-│                                      │ and simulate refactoring outcomes without touching production code. │
-└──────────────────────────────────────┴──────────────────────────────────────────────────────────────────────┘
-```
+| User Persona | Core Value & Outcome |
+| :--- | :--- |
+| **Lead Architects & CTOs** | Immediate macro visualization of structural coupling, cyclic debt, and Single Points of Failure before committing to major migrations. |
+| **Engineering Teams & Onboarding** | 10x faster codebase comprehension. Learn a 500k-LOC monolith in minutes by walking the citadela instead of reading flat file trees. |
+| **Security & Tech Debt Auditors** | Isolate the blast radius of outages, audit historical Git drift, and simulate refactoring outcomes without touching production code. |
 
 ---
 
@@ -74,37 +68,34 @@ Traditional code visualization tools dump tens of thousands of unweighted dots i
 CODEBASE.UNIVERSE enforces clean architectural hierarchy. When you open any codebase, you start at the **Macro Constellation Level** and zoom seamlessly down to the **Internal Statement Level**:
 
 ```text
-                            [ LEVEL 01: MACRO CITADEL OVERVIEW ]
-                                     ┌──────────────────┐
-                                     │   CORE CITADEL   │
-                                     │  (ARCHITECT HUB) │
-                                     └────────┬─────────┘
-                                              │
-                    ┌─────────────────────────┼─────────────────────────┐
-                    │                         │                         │
-            ┌───────┴────────┐        ┌───────┴────────┐        ┌───────┴────────┐
-            │ UI METROPOLIS  │        │   POWER GRID   │        │ STORAGE BUNKER │
-            │ (Views, DOM)   │        │ (State & Store)│        │  (DB, Models)  │
-            └───────┬────────┘        └───────┬────────┘        └───────┬────────┘
-                    │                         │                         │
-                    └─────────────────────────┼─────────────────────────┘
-                                              │
-                                     ┌────────┴────────┐
-                                     │     API HUB     │
-                                     │ (HTTP, Network) │
-                                     └────────┬─────────┘
-                                              │
-                                              ▼
-                        [ LEVEL 02: DISTRICT / SUBSYSTEM LEVEL ]
-                       Biomes · Module Clusters · Conduits
-                                              │
-                                              ▼
-                        [ LEVEL 03: BUILDING / ENTITY LEVEL ]
-                      Classes · Components · Files · Exports
-                                              │
-                                              ▼
-                        [ LEVEL 04: MICRO STATEMENT LEVEL ]
-                      Functions · Branches · Variable Flow
+             [ LEVEL 01: MACRO CITADEL OVERVIEW ]
+                     ┌──────────────────┐
+                     │   CORE CITADEL   │
+                     │  (ARCHITECT HUB) │
+                     └────────┬─────────┘
+                              │
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+  ┌───────┴────────┐  ┌───────┴────────┐  ┌───────┴────────┐
+  │ UI METROPOLIS  │  │   POWER GRID   │  │ STORAGE BUNKER │
+  │ (Views, DOM)   │  │ (State, Bus)   │  │ (DB, Storage)  │
+  └───────┬────────┘  └───────┬────────┘  └───────┬────────┘
+          │                   │                   │
+          └───────────────────┼───────────────────┘
+                              │
+                     ┌────────┴────────┐
+                     │     API HUB     │
+                     │ (HTTP, Gateway) │
+                     └────────┬─────────┘
+                              │
+                              ▼
+           [ LEVEL 02: DISTRICT / BIOME CLUSTER ]
+                              │
+                              ▼
+           [ LEVEL 03: BUILDING / ENTITY LEVEL ]
+                              │
+                              ▼
+           [ LEVEL 04: MICRO STATEMENT LEVEL ]
 ```
 
 ---
@@ -115,33 +106,33 @@ CODEBASE.UNIVERSE enforces clean architectural hierarchy. When you open any code
 Clicking on any building in the universe brings up the sliding **Architectural Inspector**:
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│ [●] renderer.ts                           LEGENDARY     [X] │
-│     src/engine/renderer.ts                CORE CITADEL      │
-├─────────────────────────────────────────────────────────────┤
-│ [ Overview ]   [ Dependencies ]   [ Calls ]   [ History ]   │
-├─────────────────────────────────────────────────────────────┤
-│  METRICS                                                    │
-│  ┌───────────┐  DEPENDENTS: 41      CALLS: 1,284            │
-│  │ ( 94% )   │  LOC: 1,842          SIZE: 14.8 KB           │
-│  │Centrality │  COMPLEXITY: HIGH    [■■■□]                  │
-│  └───────────┘                                              │
-│                                                             │
-│  ARCHITECTURAL ROLE                                         │
-│  Main graphics execution pipeline. Controls 2.5D projection │
-│  #core  #engine  #render  #critical                         │
-│                                                             │
-│  RISK ANALYSIS                                              │
-│  RISK SCORE: 87% [ CRITICO ]                                │
-│  [■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■□□□□□□] │
-│  Why?                                                       │
-│  • 41 direct dependent modules (Coupling Bottleneck)        │
-│  • 3 cyclic feedback routes detected (SCC Wormhole)         │
-│  • Cyclomatic complexity in the top 95th percentile         │
-│                                                             │
-│  QUICK ACTIONS                                              │
-│  [>] Explore Path GPS   [*] What-If Sim   [#] Refactor Arena│
-└─────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│ [●] renderer.ts                          LEGENDARY     [X] │
+│     src/engine/renderer.ts               CORE CITADEL      │
+├────────────────────────────────────────────────────────────┤
+│ [ Overview ]   [ Dependencies ]   [ Calls ]   [ History ]  │
+├────────────────────────────────────────────────────────────┤
+│ METRICS                                                    │
+│ ┌──────────┐  DEPENDENTS: 41      CALLS: 1,284             │
+│ │  (94%)   │  LOC: 1,842          SIZE: 14.8 KB            │
+│ │Centrality│  COMPLEXITY: HIGH    [■■■□]                   │
+│ └──────────┘                                               │
+│                                                            │
+│ ARCHITECTURAL ROLE                                         │
+│ Main graphics execution pipeline. Controls 2.5D projection │
+│ #core  #engine  #render  #critical                         │
+│                                                            │
+│ RISK ANALYSIS                                              │
+│ RISK SCORE: 87% [ CRITICO ]                                │
+│ [■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■□□□□□□]  │
+│ Why?                                                       │
+│ • 41 direct dependent modules (Coupling Bottleneck)        │
+│ • 3 cyclic feedback routes detected (SCC Wormhole)         │
+│ • Cyclomatic complexity in top 95th percentile             │
+│                                                            │
+│ QUICK ACTIONS                                              │
+│ [>] Explore Path GPS   [*] What-If Sim   [#] Refactor Arena│
+└────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -150,22 +141,22 @@ Clicking on any building in the universe brings up the sliding **Architectural I
 The Git Time Machine (`[06] TIME MACHINE`) allows you to step back through version control history and watch the software citadel evolve in real time:
 
 ```text
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ [●] MÁQUINA DEL TIEMPO // EVOLUCIÓN DE CITADELA GIT                                [X] │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│ [?] PROPÓSITO: Reproduce cómo creció el código a lo largo de Git commit a commit.      │
-│                                                                                        │
-│ Commit 9C482F · 2026-01-20 · refactor_squad                    SALUD: 59% [DEUDA ALTA] │
-│ "Partial refactoring reduced renderer fan-out"                                         │
-│ 521 / 579 módulos activos en este commit (90%)                                         │
-│ ────────────────────────────────────────────────────────────────────────────────────── │
-│ 2023 [Génesis]      2024 [UI Grid]      2025 [Power]    2026 [HEAD Actual]             │
-│  ▂▃▅▆▇████████████████████████████████████████████████████████████                     │
-│                                                                                        │
-│ [2024 Genesis]  [2024 Metropolis]  [2025 Power Grid]  [2025 AI]  [2026 HEAD]           │
-│                                                                                        │
-│ [ ▶ REPRODUCIR ]  [|<]  [1.0x]  [>>]                +17 módulos  +42 funcs  +81 links  │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ [●] MÁQUINA DEL TIEMPO // EVOLUCIÓN GIT CITADELA         [X] │
+├──────────────────────────────────────────────────────────────┤
+│ [?] PROPÓSITO: Reproduce el crecimiento histórico en el mapa │
+│                                                              │
+│ Commit 9C482F · 2026-01-20 · refactor_squad                  │
+│ "Partial refactoring reduced renderer fan-out"               │
+│ SALUD: 59% [DEUDA ALTA]  |  521 / 579 módulos activos (90%)  │
+│ ──────────────────────────────────────────────────────────── │
+│ 2023 [Génesis]    2024 [UI]    2025 [Power]    2026 [HEAD]   │
+│  ▂▃▅▆▇██████████████████████████████████████████████████████ │
+│                                                              │
+│ [2024 Genesis] [2024 UI] [2025 Power] [2025 AI] [2026 HEAD]  │
+│                                                              │
+│ [ ▶ PLAY ]  [|<]  [1.0x]  [>>]     +17 mods  +42 fn  +81 ln  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 - **Live 2.5D World Synchronization:** When you press **`▶ PLAY`**, unborn files are dimmed as transparent wireframe blueprints (`alpha: 0.04`). You physically watch buildings sprout from the ground and conduits connect across eras.
@@ -203,7 +194,7 @@ Need to understand how two distant modules communicate?
 
 CODEBASE.UNIVERSE parses and connects multi-language polyglot repositories out of the box:
 
-| Domain | Supported File Extensions & Frameworks |
+| Domain | Supported Extensions & Frameworks |
 | :--- | :--- |
 | **Modern Web & Components** | `.astro`, `.vue`, `.svelte`, `.tsx`, `.jsx`, `.ts`, `.js`, `.mjs`, `.cjs`, `.html` |
 | **Styling & Tokens** | `.css`, `.scss`, `.sass`, `.less`, `.postcss` |
@@ -221,20 +212,20 @@ Automatically purges lockfiles (`package-lock.json`, `Cargo.lock`, `pnpm-lock.ya
 ## 6. The 8 Architectural Biomes
 
 ```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                    THE 8 ARCHITECTURAL BIOMES                                    │
-├───────────────────────┬──────────────────────┬───────────────────────────────────────────────────┤
-│ BIOME                 │ COLOR / ACCENT       │ ARCHITECTURAL ROLE & SILHOUETTE                   │
-├───────────────────────┼──────────────────────┼───────────────────────────────────────────────────┤
-│ 1. Central Core       │ Golden / #38bdf8     │ Architectural Heart · Mega-Skyscrapers            │
-│ 2. UI Metropolis      │ Violet / #a855f7     │ Components · Views · Faceted Glass Towers         │
-│ 3. Power Grid         │ Emerald / #10b981    │ State · Store · Event Bus · Capacitors            │
-│ 4. Storage Bunker     │ Cobalt / #06b6d4     │ Database · Models · Persistence Silos             │
-│ 5. Transmission Hub   │ Cyan / #0ea5e9       │ REST · GraphQL · Gateways · Parabolic Arrays      │
-│ 6. Research Labs      │ Mint / #34d399       │ Tests · Mocks · Benchmarks · Geodesic Domes       │
-│ 7. Hazard Zone        │ Crimson / #f43f5e    │ High Risk Hotspots · Cycles · Jagged Spires       │
-│ 8. Forgotten Ruins    │ Platinum / #64748b   │ Dead Code · Deprecated Monoliths                  │
-└───────────────────────┴──────────────────────┴───────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                  THE 8 ARCHITECTURAL BIOMES                  │
+├──────────────────┬─────────────────┬─────────────────────────┤
+│ BIOME            │ ACCENT COLOR    │ DOMAIN ROLE             │
+├──────────────────┼─────────────────┼─────────────────────────┤
+│ 1. Central Core  │ Gold (#38bdf8)  │ Architectural Heart     │
+│ 2. UI Metropolis │ Violet (#a855f7)│ Components & Views      │
+│ 3. Power Grid    │ Green (#10b981) │ State & Event Bus       │
+│ 4. Storage Bunker│ Cobalt (#06b6d4)│ Database & Persistence  │
+│ 5. Trans. Hub    │ Cyan (#0ea5e9)  │ APIs & Network Gateways │
+│ 6. Research Labs │ Mint (#34d399)  │ Tests & Mocks           │
+│ 7. Hazard Zone   │ Red (#f43f5e)   │ Hotspots & Cycles       │
+│ 8. Ruins         │ Slate (#64748b) │ Dead & Deprecated Code  │
+└──────────────────┴─────────────────┴─────────────────────────┘
 ```
 
 ---
@@ -272,8 +263,8 @@ Instantly switch between **Español** and **English** with the `[ ES / EN ]` but
 ---
 
 ```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                         CODEBASE.UNIVERSE // ARCHITECTURAL INTELLIGENCE                          │
-│                                  https://github.com/luisrodriguez-rgb                            │
-└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│        CODEBASE.UNIVERSE // ARCHITECTURAL INTELLIGENCE       │
+│              https://github.com/luisrodriguez-rgb            │
+└──────────────────────────────────────────────────────────────┘
 ```
