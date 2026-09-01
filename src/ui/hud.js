@@ -6,9 +6,10 @@ import { sfx } from '../audio/soundFX.js';
 import { i18n } from '../i18n/translations.js';
 
 export class HudController {
-  constructor(state, manualModal) {
+  constructor(state, manualModal, world = null) {
     this.state = state;
     this.manualModal = manualModal;
+    this.world = world;
 
     this.initElements();
     this.initEvents();
@@ -115,6 +116,7 @@ export class HudController {
         const targetModal = document.getElementById(modalId);
         if (targetModal) targetModal.classList.add('hidden');
         document.getElementById('modal-backdrop')?.classList.add('hidden');
+        if (this.world) this.world.activeMode = 'world';
       });
     });
 
@@ -123,6 +125,7 @@ export class HudController {
       sfx.playClick();
       document.querySelectorAll('.deck-modal').forEach(m => m.classList.add('hidden'));
       document.getElementById('modal-backdrop')?.classList.add('hidden');
+      if (this.world) this.world.activeMode = 'world';
     });
 
     i18n.subscribe(() => {
@@ -139,22 +142,33 @@ export class HudController {
     const backdrop = document.getElementById('modal-backdrop');
 
     if (tabId === 'nav-world-btn') {
+      if (this.world) this.world.activeMode = 'world';
       backdrop?.classList.add('hidden');
+      document.getElementById('timeline-drawer')?.classList.add('hidden');
     } else if (tabId === 'nav-codedex-btn') {
+      if (this.world) this.world.activeMode = 'world';
       document.getElementById('codedex-modal')?.classList.remove('hidden');
       backdrop?.classList.remove('hidden');
+      document.getElementById('timeline-drawer')?.classList.add('hidden');
     } else if (tabId === 'nav-quests-btn') {
+      if (this.world) this.world.activeMode = 'quests';
       document.getElementById('quests-modal')?.classList.remove('hidden');
       backdrop?.classList.remove('hidden');
+      document.getElementById('timeline-drawer')?.classList.add('hidden');
     } else if (tabId === 'nav-threats-btn') {
+      if (this.world) this.world.activeMode = 'threats';
       document.getElementById('threats-modal')?.classList.remove('hidden');
       backdrop?.classList.remove('hidden');
+      document.getElementById('timeline-drawer')?.classList.add('hidden');
     } else if (tabId === 'nav-whatif-btn') {
+      if (this.world) this.world.activeMode = 'simulation';
       document.getElementById('whatif-modal')?.classList.remove('hidden');
       backdrop?.classList.remove('hidden');
+      document.getElementById('timeline-drawer')?.classList.add('hidden');
     } else if (tabId === 'nav-timeline-btn') {
+      if (this.world) this.world.activeMode = 'world';
       const drawer = document.getElementById('timeline-drawer');
-      drawer?.classList.toggle('hidden');
+      drawer?.classList.remove('hidden');
     }
   }
 
@@ -207,7 +221,6 @@ export class HudController {
       this.langToggleBtn.textContent = i18n.currentLang === 'es' ? 'ES / EN' : 'EN / ES';
     }
 
-    // Top Header
     const brandHeader = document.getElementById('brand-header-title');
     if (brandHeader) brandHeader.textContent = i18n.t('brand_title');
 
@@ -229,7 +242,6 @@ export class HudController {
     const lblRank = document.getElementById('lbl-rank');
     if (lblRank) lblRank.textContent = i18n.t('stat_rank');
 
-    // Search Box & Filters
     if (this.searchInput) this.searchInput.placeholder = i18n.t('search_placeholder');
 
     const pillAll = document.getElementById('filter-pill-all');
@@ -253,14 +265,12 @@ export class HudController {
     const pillUnused = document.getElementById('filter-pill-unused');
     if (pillUnused) pillUnused.textContent = i18n.t('filter_unused');
 
-    // Minimap & Reset
     const minimapLbl = document.getElementById('minimap-label-text');
     if (minimapLbl) minimapLbl.textContent = i18n.t('radar_title');
 
     const zoomReset = document.getElementById('zoom-reset-btn');
     if (zoomReset) zoomReset.textContent = i18n.t('cam_reset');
 
-    // Dock text
     const dockWorld = document.getElementById('dock-text-world');
     if (dockWorld) dockWorld.textContent = i18n.t('dock_world');
 

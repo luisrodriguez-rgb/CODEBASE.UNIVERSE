@@ -1,6 +1,6 @@
 /**
  * CODEBASE.UNIVERSE - Main Application Bootstrap.
- * Connects Analysis Engine, Game Simulation, 2D/2.5D Canvas, Web Audio, i18n, and Cyber Decks.
+ * Connects Analysis Engine, Game Simulation, 2.5D Canvas, Web Audio, i18n, and Cyber Decks.
  */
 
 import { buildSketionGraph } from './data/sketionDataset.js';
@@ -91,8 +91,8 @@ class CodebaseUniverseApp {
     this.world = new GraphWorld(this.canvas, this.minimapCanvas, graph, analysis, globalState);
     this.world.start();
 
-    // 4. Initialize Views
-    this.views.inspector = new InspectorController(globalState, this.world.camera);
+    // 4. Initialize Views with world integration
+    this.views.inspector = new InspectorController(globalState, this.world.camera, this.world);
     this.views.codedex = new CodeDexViewController(globalState, this.world.camera);
     this.views.quests = new QuestViewController(globalState, this.world.camera);
     this.views.threats = new ThreatViewController(globalState, this.world.camera);
@@ -100,7 +100,7 @@ class CodebaseUniverseApp {
     this.views.timeline = new TimelineViewController(globalState, this.world);
 
     // 5. Initialize HUD Coordinator
-    this.hud = new HudController(globalState, this.manualModal);
+    this.hud = new HudController(globalState, this.manualModal, this.world);
 
     // Connect Camera Zoom Buttons
     document.getElementById('zoom-in-btn')?.addEventListener('click', () => {
