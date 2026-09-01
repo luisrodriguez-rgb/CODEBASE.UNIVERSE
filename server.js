@@ -44,32 +44,96 @@ const server = http.createServer((req, res) => {
 
   // 2. Codebase-Memory-MCP (CBM) Integration API
   if (pathname === '/api/cbm/projects') {
-    // Try to list projects via CBM CLI
-    exec('codebase-memory-mcp cli list_projects --json', (err, stdout, stderr) => {
-      if (err) {
-        // Fallback: check if ~/.cache/codebase-memory-mcp directory exists
-        const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-        const cbmCache = path.join(homeDir, '.cache', 'codebase-memory-mcp');
-        let projects = [];
-        if (fs.existsSync(cbmCache)) {
-          const files = fs.readdirSync(cbmCache);
-          projects = files.filter(f => f.endsWith('.db')).map(f => ({
-            name: f.replace(/\.db$/, ''),
-            status: 'cached'
-          }));
-        }
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ available: projects.length > 0, projects }));
+    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    const cbmCache = path.join(homeDir, '.cache', 'codebase-memory-mcp');
+    let projects = [];
+    if (fs.existsSync(cbmCache)) {
+      const files = fs.readdirSync(cbmCache);
+      projects = files.filter(f => f.endsWith('.db') && !f.startsWith('_')).map(f => {
+        const name = f.replace(/\.db$/, '');
+        const cleanTitle = name.replace(/^Users-[^-]+-Desktop-Trabajos-/, '').replace(/-/g, ' / ');
+        return {
+          id: name,
+          name: cleanTitle,
+          file: f,
+          status: 'cached'
+        };
+      });
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ available: projects.length > 0, projects }));
+    return;
+  }
+
+  // 2.1 Load Specific CBM SQLite Project Graph
+  if (pathname === '/api/cbm/load') {
+    const projectName = parsedUrl.searchParams.get('project') || 'Users-leonfeliperodriguez-Desktop-Trabajos-CODEBASE.UNIVERSE';
+    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    const dbPath = path.join(homeDir, '.cache', 'codebase-memory-mcp', `${projectName}.db`);
+
+    if (!fs.existsSync(dbPath)) {
+      res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: `CBM database not found for project ${projectName}` }));
+      return;
+    }
+
+    const nodeQuery = `sqlite3 -json "${dbPath}" "SELECT id, label, name, qualified_name, file_path, start_line, end_line, properties FROM nodes WHERE label != 'Project';"`;
+    const edgeQuery = `sqlite3 -json "${dbPath}" "SELECT source_id, target_id, type, properties FROM edges;"`;
+
+    exec(nodeQuery, { maxBuffer: 1024 * 1024 * 10 }, (errNodes, stdoutNodes) => {
+      if (errNodes) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: `Failed to query nodes: ${errNodes.message}` }));
         return;
       }
-      try {
-        const data = JSON.parse(stdout);
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ available: true, projects: data.projects || data }));
-      } catch (e) {
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ available: false, projects: [] }));
-      }
+
+      exec(edgeQuery, { maxBuffer: 1024 * 1024 * 10 }, (errEdges, stdoutEdges) => {
+        try {
+          const rawNodes = JSON.parse(stdoutNodes || '[]');
+          const rawEdges = JSON.parse(stdoutEdges || '[]');
+
+          const nodeMap = new Map();
+          const nodes = rawNodes.map(n => {
+            const nodeObj = {
+              id: n.qualified_name || `${n.id}`,
+              numericId: n.id,
+              name: n.name,
+              path: n.file_path || n.name,
+              label: n.label,
+              loc: (n.end_line && n.start_line) ? (n.end_line - n.start_line + 1) : 40,
+              complexity: Math.max(1, Math.round(((n.end_line - n.start_line + 1) || 40) * 0.12))
+            };
+            nodeMap.set(n.id, nodeObj.id);
+            return nodeObj;
+          });
+
+          const edges = [];
+          for (const e of rawEdges) {
+            const srcId = nodeMap.get(e.source_id);
+            const tgtId = nodeMap.get(e.target_id);
+            if (srcId && tgtId && srcId !== tgtId) {
+              edges.push({
+                source: srcId,
+                target: tgtId,
+                type: e.type || 'calls'
+              });
+            }
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            cbm_schema: true,
+            project: projectName,
+            totalNodes: nodes.length,
+            totalEdges: edges.length,
+            nodes,
+            edges
+          }));
+        } catch (parseErr) {
+          res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: `JSON parsing error: ${parseErr.message}` }));
+        }
+      });
     });
     return;
   }

@@ -129,28 +129,63 @@ export class TitleScreenController {
       sfx.playClick();
       this.showTerminal();
       this.localScanBtn.disabled = true;
-      this.localScanBtn.textContent = '[...] SCANNING AST...';
+      this.localScanBtn.textContent = '[...] LOADING GRAPH...';
+
+      const selectedCbm = this.cbmSelect?.value;
+      const isCbm = selectedCbm && selectedCbm !== 'default';
 
       try {
-        this.logTerminal('[>] Querying local workspace Tree-sitter AST & CBM cache...');
-        const res = await fetch('/api/scan');
-        if (res.ok) {
+        if (isCbm) {
+          this.logTerminal(`[>] Ingesting CBM SQLite Knowledge Graph: ${selectedCbm}...`);
+          const res = await fetch(`/api/cbm/load?project=${encodeURIComponent(selectedCbm)}`);
+          if (!res.ok) throw new Error(`Failed to load CBM project (${res.status})`);
           const raw = await res.json();
-          const graph = new CodeGraph();
-          for (const n of raw.nodes) graph.addNode(n);
-          for (const e of raw.edges) graph.addEdge(e);
+          const graph = CbmBridgeDriver.transformCbmToUniverseGraph(raw);
 
           sfx.playVictory();
-          this.logTerminal(`[SUCCESS] Loaded ${graph.nodes.size} local entities & ${graph.edges.length} connections.`);
+          this.logTerminal(`[SUCCESS] CBM Ingestion Complete: ${graph.nodes.size} nodes, ${graph.edges.length} connections.`);
 
           setTimeout(() => {
             this.hide();
             if (this.onDatasetSelect) {
-              this.onDatasetSelect('custom_raw', graph, 'LOCAL WORKSPACE (CODEBASE.UNIVERSE)');
+              this.onDatasetSelect('custom_raw', graph, `CBM // ${selectedCbm.replace(/^Users-[^-]+-Desktop-Trabajos-/, '')}`);
             }
           }, 600);
         } else {
-          throw new Error('Local scanner endpoint unreachable.');
+          this.logTerminal('[>] Querying local workspace AST & CBM SQLite engine...');
+          // Try CBM first for CODEBASE.UNIVERSE
+          let res = await fetch('/api/cbm/load?project=Users-leonfeliperodriguez-Desktop-Trabajos-CODEBASE.UNIVERSE');
+          if (res.ok) {
+            const raw = await res.json();
+            const graph = CbmBridgeDriver.transformCbmToUniverseGraph(raw);
+            sfx.playVictory();
+            this.logTerminal(`[SUCCESS] CBM Engine: Loaded ${graph.nodes.size} entities & ${graph.edges.length} edges.`);
+
+            setTimeout(() => {
+              this.hide();
+              if (this.onDatasetSelect) {
+                this.onDatasetSelect('custom_raw', graph, 'CODEBASE.UNIVERSE (CBM GRAPH)');
+              }
+            }, 600);
+          } else {
+            // Fallback to local scanner
+            const scanRes = await fetch('/api/scan');
+            if (!scanRes.ok) throw new Error('Local scanner endpoint unreachable.');
+            const raw = await scanRes.json();
+            const graph = new CodeGraph();
+            for (const n of raw.nodes) graph.addNode(n);
+            for (const e of raw.edges) graph.addEdge(e);
+
+            sfx.playVictory();
+            this.logTerminal(`[SUCCESS] Loaded ${graph.nodes.size} local entities & ${graph.edges.length} connections.`);
+
+            setTimeout(() => {
+              this.hide();
+              if (this.onDatasetSelect) {
+                this.onDatasetSelect('custom_raw', graph, 'LOCAL WORKSPACE (CODEBASE.UNIVERSE)');
+              }
+            }, 600);
+          }
         }
       } catch (err) {
         sfx.playAlert();
@@ -215,10 +250,11 @@ export class TitleScreenController {
       if (res.ok) {
         const data = await res.json();
         if (data.available && data.projects && data.projects.length > 0 && this.cbmSelect) {
+          this.cbmSelect.innerHTML = '<option value="default">[ SELECCIONAR PROYECTO CBM CACHE ]</option>';
           for (const p of data.projects) {
             const opt = document.createElement('option');
-            opt.value = `cbm_${p.name}`;
-            opt.textContent = `[CBM] ${p.name.toUpperCase()} (${p.node_count || 'Cached'} nodes)`;
+            opt.value = p.id || p.name;
+            opt.textContent = `[CBM] ${p.name.toUpperCase()}`;
             this.cbmSelect.appendChild(opt);
           }
         }
