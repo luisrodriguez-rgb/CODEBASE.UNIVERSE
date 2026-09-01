@@ -1,11 +1,13 @@
 /**
  * Layered Entity Inspector Controller for CODEBASE.UNIVERSE.
  * Progressive disclosure architecture with 4 functional tabs:
- * [ ARCHITECTURE ] | [ DEPENDENCIES ] | [ SIMULATION ] | [ HISTORY ]
- * ZERO EMOJIS: Pure vector gauges and clean typography.
+ * [ ARCHITECTURE ] | [ DEPENDENCIES ] | [ RECOMMENDATIONS ] | [ SIMULATION ]
+ * Answers: "What is here?", "How is it connected?", and "What should I do?"
+ * ZERO EMOJIS.
  */
 
 import { RARITY_CONFIG } from '../analysis/types.js';
+import { ArchitecturalRecommendationEngine } from '../analysis/recommendations.js';
 import { sfx } from '../audio/soundFX.js';
 import { i18n } from '../i18n/translations.js';
 
@@ -43,6 +45,8 @@ export class InspectorController {
     this.state.subscribe((event, data) => {
       if (event === 'node_selected') {
         if (data.nodeId) {
+          // Unified Multi-System Reaction: Mark discovered & add XP
+          this.state.knowledgeTracker.markDiscovered(data.nodeId);
           this.open();
           this.renderNodeDetails(data.nodeId);
         } else {
@@ -73,10 +77,15 @@ export class InspectorController {
 
     const callers = this.state.graph.getDependents(nodeId);
     const deps = this.state.graph.getDependencies(nodeId);
-
     const isEs = i18n.currentLang === 'es';
 
-    // Renders Header + Tab Navigation + Active Tab Body
+    const interventions = ArchitecturalRecommendationEngine.getInterventionsForNode(
+      node,
+      stat,
+      this.state.analysis,
+      isEs
+    );
+
     this.container.innerHTML = `
       <div class="inspector-header">
         <div class="inspector-title-row">
@@ -94,14 +103,15 @@ export class InspectorController {
         </div>
 
         <div class="inspector-tabs-nav">
-          <button class="insp-tab-btn ${this.activeTab === 'architecture' ? 'active' : ''}" data-tab="architecture">${i18n.t('tab_overview') || 'ARCHITECTURE'}</button>
-          <button class="insp-tab-btn ${this.activeTab === 'dependencies' ? 'active' : ''}" data-tab="dependencies">${i18n.t('tab_dependencies') || 'DEPENDENCIES'}</button>
-          <button class="insp-tab-btn ${this.activeTab === 'simulation' ? 'active' : ''}" data-tab="simulation">${i18n.t('dock_whatif') || 'SIMULATION'}</button>
+          <button class="insp-tab-btn ${this.activeTab === 'architecture' ? 'active' : ''}" data-tab="architecture">${isEs ? 'ARQUITECTURA' : 'ARCHITECTURE'}</button>
+          <button class="insp-tab-btn ${this.activeTab === 'dependencies' ? 'active' : ''}" data-tab="dependencies">${isEs ? 'CONEXIONES' : 'DEPENDENCIES'}</button>
+          <button class="insp-tab-btn ${this.activeTab === 'recommendations' ? 'active' : ''}" data-tab="recommendations">${isEs ? 'ACCIONES' : 'INTERVENTIONS'}</button>
+          <button class="insp-tab-btn ${this.activeTab === 'simulation' ? 'active' : ''}" data-tab="simulation">${isEs ? 'SIMULACIÓN' : 'SIMULATION'}</button>
         </div>
       </div>
 
       <div class="inspector-tab-content">
-        ${this.renderTabContent(node, stat, callers, deps, isEs)}
+        ${this.renderTabContent(node, stat, callers, deps, interventions, isEs)}
       </div>
 
       <div class="inspector-actions">
@@ -169,7 +179,7 @@ export class InspectorController {
     });
   }
 
-  renderTabContent(node, stat, callers, deps, isEs) {
+  renderTabContent(node, stat, callers, deps, interventions, isEs) {
     if (this.activeTab === 'architecture') {
       return `
         <div class="metrics-grid">
@@ -237,6 +247,29 @@ export class InspectorController {
               }).join('')}
             </div>
           </div>
+        </div>
+      `;
+    }
+
+    if (this.activeTab === 'recommendations') {
+      return `
+        <div class="interventions-container" style="display:flex;flex-direction:column;gap:10px;">
+          <div style="font-size:10px;font-weight:700;color:var(--accent-cyan);letter-spacing:0.05em;">
+            [+] ${isEs ? 'ACCIONES RECOMENDADAS POR EL SISTEMA' : 'ACTIONABLE ARCHITECTURAL INTERVENTIONS'}
+          </div>
+          ${interventions.map(item => `
+            <div class="intervention-card" style="background:rgba(10,16,28,0.85);border:1px solid ${item.priority === 'CRITICAL' || item.priority === 'HIGH' ? 'rgba(244,63,94,0.35)' : 'rgba(56,189,248,0.25)'};border-radius:4px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:10.5px;font-weight:700;color:#fff;">${item.title}</span>
+                <span class="badge ${item.priority === 'CRITICAL' || item.priority === 'HIGH' ? 'threat-badge' : 'highlight'}">${item.priority}</span>
+              </div>
+              <div style="font-size:9.5px;color:var(--accent-cyan);">${item.principle}</div>
+              <p style="font-size:10.5px;color:var(--text-secondary);margin:4px 0;line-height:1.4;">${item.action}</p>
+              <div style="font-size:9.5px;color:var(--accent-emerald);border-top:1px solid rgba(30,41,59,0.5);padding-top:4px;">
+                IMPACT: ${item.expectedImpact}
+              </div>
+            </div>
+          `).join('')}
         </div>
       `;
     }
