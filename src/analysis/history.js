@@ -138,11 +138,19 @@ export function generateEvolutionaryHistory(fullGraph) {
 
     return {
       index: idx + 1,
+      generation: idx + 1,
       totalGens: generations.length,
-      ...gen,
+      hash: gen.commitHash,
+      date: gen.date,
+      author: gen.author,
+      message: gen.note || gen.message,
+      healthScore: gen.health,
       nodeCount: nodeSliceCount,
       edgeCount: activeEdges.length,
       activeNodeIds
     };
   });
 }
+
+// Alias export for backwards compatibility
+export const generateGitEvolutionHistory = generateEvolutionaryHistory;

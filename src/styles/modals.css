@@ -5,7 +5,7 @@
   left: 0;
   right: 0;
   bottom: 52px;
-  background: rgba(4, 7, 14, 0.82);
+  background: rgba(4, 7, 14, 0.85);
   backdrop-filter: blur(12px);
   z-index: 40;
 }
@@ -826,4 +826,212 @@
 .enter-world-cta:hover {
   background: #7dd3fc;
   box-shadow: 0 0 36px rgba(56, 189, 248, 0.65);
+}
+
+/* 7. Dedicated Architect's Manual Modal */
+.manual-layout-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  overflow: hidden;
+}
+
+.manual-nav-sidebar {
+  border-right: 1px solid var(--border-subtle);
+  background: rgba(8, 12, 20, 0.7);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 10px;
+  gap: 6px;
+}
+
+.manual-nav-tab {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+  letter-spacing: 0.04em;
+  transition: all 0.15s ease;
+}
+
+.manual-nav-tab:hover {
+  background: rgba(28, 38, 58, 0.6);
+  color: #fff;
+}
+
+.manual-nav-tab.active {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-cyan);
+  border-color: rgba(56, 189, 248, 0.4);
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.15);
+}
+
+.manual-content-body {
+  padding: 28px 32px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.manual-section h3 {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.manual-section p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.manual-callout {
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 12px 16px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11.5px;
+  color: #e2e8f0;
+  margin: 14px 0;
+}
+
+.callout-badge {
+  background: var(--accent-cyan);
+  color: #050811;
+  font-weight: 700;
+  font-size: 9.5px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+
+.manual-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.manual-card {
+  background: rgba(13, 18, 30, 0.7);
+  border: 1px solid var(--border-subtle);
+  padding: 16px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.manual-card h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+.manual-card p {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.controls-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.c-row {
+  background: rgba(13, 18, 30, 0.6);
+  border: 1px solid var(--border-subtle);
+  padding: 10px 14px;
+  border-radius: 4px;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  align-items: center;
+  font-size: 11.5px;
+}
+
+.c-row .key {
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+.c-row span:last-child {
+  color: var(--text-secondary);
+}
+
+.biome-guide-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.biome-card {
+  background: rgba(13, 18, 30, 0.6);
+  border: 1px solid var(--border-subtle);
+  padding: 14px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.biome-card h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.biome-card p {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 0;
+}
+
+.formula-box {
+  background: #060910;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--accent-cyan);
+  margin: 14px 0;
+}
+
+.rarity-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.r-item {
+  background: rgba(13, 18, 30, 0.6);
+  border: 1px solid var(--border-subtle);
+  padding: 10px 14px;
+  border-radius: 4px;
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  align-items: center;
+  font-size: 11.5px;
+}
+
+.r-badge {
+  font-weight: 700;
+  font-size: 10.5px;
 }

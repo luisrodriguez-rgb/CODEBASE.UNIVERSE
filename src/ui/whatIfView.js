@@ -1,145 +1,144 @@
 /**
- * What-If Impact Laboratory Controller.
- * Runs failure, contract change, and isolation cascading simulations.
+ * What-If Impact & Blast Radius Lab Controller for CODEBASE.UNIVERSE.
  */
 
 import { calculateBlastRadius } from '../analysis/blastRadius.js';
+import { sfx } from '../audio/soundFX.js';
+import { i18n } from '../i18n/translations.js';
 
-export class WhatIfView {
-  constructor(state, graph, analysis, world) {
+export class WhatIfViewController {
+  constructor(state, camera, effects) {
     this.state = state;
-    this.graph = graph;
-    this.analysis = analysis;
-    this.world = world;
+    this.camera = camera;
+    this.effects = effects;
 
-    this.modal = document.getElementById('whatif-modal');
+    this.container = document.getElementById('whatif-modal');
     this.targetSelect = document.getElementById('whatif-target-node');
     this.scenarioSelect = document.getElementById('whatif-simulation-type');
     this.runBtn = document.getElementById('run-simulation-btn');
     this.resultsContent = document.getElementById('whatif-results-content');
 
     this.initEvents();
+    this.subscribeState();
+    this.updateI18n();
   }
 
   initEvents() {
-    this.runBtn.addEventListener('click', () => {
-      const targetId = this.targetSelect.value;
-      const scenario = this.scenarioSelect.value;
-      this.executeSimulation(targetId, scenario);
+    this.runBtn?.addEventListener('click', () => {
+      sfx.playAlarm();
+      this.executeSimulation();
     });
 
-    window.addEventListener('open-whatif-sim', (e) => {
-      const { targetId, scenario } = e.detail;
-      this.open(targetId, scenario);
-      this.executeSimulation(targetId, scenario);
+    i18n.subscribe(() => {
+      this.updateI18n();
     });
   }
 
-  open(preselectId = null, preselectScenario = null) {
-    this.modal.classList.remove('hidden');
-    document.getElementById('modal-backdrop').classList.remove('hidden');
-
-    this.populateDropdown();
-    if (preselectId) this.targetSelect.value = preselectId;
-    if (preselectScenario) this.scenarioSelect.value = preselectScenario;
-  }
-
-  close() {
-    this.modal.classList.add('hidden');
-    document.getElementById('modal-backdrop').classList.add('hidden');
-    this.world.effects.clearBlackout();
+  subscribeState() {
+    this.state.subscribe((event, data) => {
+      if (event === 'graph_loaded') {
+        this.populateDropdown();
+      }
+    });
   }
 
   populateDropdown() {
-    const nodes = Array.from(this.graph.nodes.values()).sort((a, b) => a.name.localeCompare(b.name));
+    if (!this.targetSelect || !this.state.graph) return;
+    const nodes = Array.from(this.state.graph.nodes.values());
+
     this.targetSelect.innerHTML = nodes.map(n => {
-      const stat = this.analysis.nodeStats.get(n.id);
-      return `<option value="${n.id}">[${stat?.rarity.toUpperCase() || 'MOD'}] ${n.name}</option>`;
+      return `<option value="${n.id}">${n.name} (${n.biome.toUpperCase()} - ${n.path})</option>`;
     }).join('');
   }
 
-  executeSimulation(targetId, scenario) {
-    if (!targetId) return;
+  executeSimulation() {
+    const targetId = this.targetSelect?.value;
+    const scenario = this.scenarioSelect?.value || 'failure';
+    if (!targetId || !this.state.graph) return;
 
-    const result = calculateBlastRadius(this.graph, targetId, scenario);
-    if (!result) return;
+    const targetNode = this.state.graph.getNode(targetId);
+    const blast = calculateBlastRadius(this.state.graph, this.state.analysis, targetId, scenario);
+    const isEs = i18n.currentLang === 'es';
 
-    // Trigger visual shockwave and blackout cascade in the canvas world
-    const targetNode = this.graph.getNode(targetId);
-    if (targetNode) {
-      this.world.effects.triggerShockwave(targetNode.x, targetNode.y, '#f43f5e', 450);
-      this.world.effects.setBlackoutNodes(result.affectedDetails.map(d => d.id));
-    }
-
+    // Render results pane
     this.resultsContent.innerHTML = `
       <div class="whatif-stats-banner">
         <div class="stat-box">
-          <span class="stat-lbl">TOTAL AFFECTED</span>
-          <span class="stat-val risk-high">${result.affectedCount} files</span>
+          <span class="stat-lbl">${i18n.t('stat_affected')}</span>
+          <span class="stat-val" style="color:var(--accent-rose)">${blast.totalAffected}</span>
         </div>
         <div class="stat-box">
-          <span class="stat-lbl">DIRECT DEPENDENTS</span>
-          <span class="stat-val">${result.directCount}</span>
+          <span class="stat-lbl">${i18n.t('stat_direct')}</span>
+          <span class="stat-val">${blast.directDependents.length}</span>
         </div>
         <div class="stat-box">
-          <span class="stat-lbl">INDIRECT CASUALTIES</span>
-          <span class="stat-val">${result.indirectCount}</span>
+          <span class="stat-lbl">${i18n.t('stat_indirect')}</span>
+          <span class="stat-val">${blast.indirectDependents.length}</span>
         </div>
         <div class="stat-box">
-          <span class="stat-lbl">CRITICAL BREAKPOINTS</span>
-          <span class="stat-val">${result.criticalPaths}</span>
+          <span class="stat-lbl">${i18n.t('stat_critical_paths')}</span>
+          <span class="stat-val" style="color:var(--accent-amber)">${blast.criticalPaths}</span>
         </div>
       </div>
 
       <div class="blast-gauge-box">
-        <div style="display:flex; justify-content:space-between; font-size:11px;">
-          <span>ESTIMATED SYSTEM BLAST RADIUS</span>
-          <strong class="${result.blastRadiusPct > 50 ? 'risk-high' : 'risk-medium'}">${result.blastRadiusPct}%</strong>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:#fff;">${i18n.t('stat_blast_radius')}</span>
+          <strong style="font-size:16px;color:var(--accent-rose);">${blast.blastRadiusScore}%</strong>
         </div>
         <div class="gauge-track">
-          <div class="gauge-fill" id="animated-gauge-fill"></div>
+          <div class="gauge-fill" style="width: ${blast.blastRadiusScore}%"></div>
         </div>
       </div>
 
       <div class="drawer-section">
-        <h3 class="section-title">IMPACTED DOWNSTREAM MODULES & CASUALTY LOG</h3>
-        <ul class="entity-link-list" style="max-height: 220px;">
-          ${result.affectedDetails.map(d => `
-            <li class="entity-link-item" data-node-id="${d.id}">
-              <span>${d.name} ${d.isDirect ? '<strong style="color:var(--accent-rose)">[DIRECT]</strong>' : '<span style="color:var(--text-muted)">[TRANSITIVE]</span>'}</span>
-              <span style="color:var(--text-muted)">${d.biome}</span>
+        <h4 style="font-size:11px;letter-spacing:0.08em;color:var(--text-muted);">${i18n.t('whatif_cascade_log')} (${blast.totalAffected})</h4>
+        <ul class="entity-link-list" style="max-height:160px;">
+          ${blast.casualtyList.slice(0, 35).map(c => `
+            <li class="entity-link-item">
+              <span>${c.name}</span>
+              <span style="color:var(--text-muted);font-size:9.5px">${c.reason} (Layer ${c.depth})</span>
             </li>
           `).join('')}
         </ul>
       </div>
 
-      <button id="view-in-world-blackout-btn" class="action-btn" style="align-self:flex-start;">
-        VIEW BLACKOUT CASCADE IN WORLD MAP
+      <button id="trigger-world-blackout-btn" class="execute-sim-btn" style="background:#0284c7;box-shadow:0 0 20px rgba(2,132,199,0.35);">
+        ${i18n.t('btn_view_blackout')}
       </button>
     `;
 
-    setTimeout(() => {
-      const fill = document.getElementById('animated-gauge-fill');
-      if (fill) fill.style.width = `${result.blastRadiusPct}%`;
-    }, 50);
-
-    document.getElementById('view-in-world-blackout-btn')?.addEventListener('click', () => {
-      this.close();
+    document.getElementById('trigger-world-blackout-btn')?.addEventListener('click', () => {
+      sfx.playWarp();
+      // Close modal, trigger shockwave and blackout cascade in canvas
+      this.container?.classList.add('hidden');
+      document.getElementById('modal-backdrop')?.classList.add('hidden');
+      
       if (targetNode) {
-        this.world.camera.centerOn(targetNode.x, targetNode.y);
+        this.camera.centerOn(targetNode.x, targetNode.y, 2.5);
+        this.effects.triggerShockwave(targetNode.x, targetNode.y, '#f43f5e', 450);
+        this.effects.triggerBlackoutCascade(blast.casualtyList.map(c => c.id));
       }
     });
+  }
 
-    this.resultsContent.querySelectorAll('.entity-link-item').forEach(el => {
-      el.addEventListener('click', () => {
-        const nodeId = el.getAttribute('data-node-id');
-        if (nodeId) {
-          this.close();
-          this.state.setSelectedNode(nodeId);
-          const n = this.graph.getNode(nodeId);
-          if (n) this.world.camera.centerOn(n.x, n.y);
-        }
-      });
-    });
+  updateI18n() {
+    const title = document.getElementById('whatif-header-title');
+    if (title) title.textContent = i18n.t('whatif_title');
+
+    const lblHypothesis = document.getElementById('whatif-lbl-hypothesis');
+    if (lblHypothesis) lblHypothesis.textContent = i18n.t('whatif_hypothesis');
+
+    const lblTarget = document.getElementById('whatif-lbl-target');
+    if (lblTarget) lblTarget.textContent = i18n.t('whatif_target_label');
+
+    const lblScenario = document.getElementById('whatif-lbl-scenario');
+    if (lblScenario) lblScenario.textContent = i18n.t('whatif_scenario_label');
+
+    const runBtn = document.getElementById('run-simulation-btn');
+    if (runBtn) runBtn.textContent = i18n.t('btn_run_sim');
+
+    const lblResultsHeading = document.getElementById('whatif-lbl-results-heading');
+    if (lblResultsHeading) lblResultsHeading.textContent = i18n.t('whatif_telemetry_heading');
   }
 }

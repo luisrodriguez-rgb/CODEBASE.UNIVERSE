@@ -1,110 +1,119 @@
 /**
- * CodeDex Entity Registry Modal Controller.
+ * CodeDex Entity Registry Modal Controller for CODEBASE.UNIVERSE.
  */
 
 import { RARITY_CONFIG } from '../analysis/types.js';
+import { sfx } from '../audio/soundFX.js';
+import { i18n } from '../i18n/translations.js';
 
-export class CodeDexView {
-  constructor(state, graph, analysis, world) {
+export class CodeDexViewController {
+  constructor(state, camera) {
     this.state = state;
-    this.graph = graph;
-    this.analysis = analysis;
-    this.world = world;
+    this.camera = camera;
 
-    this.modal = document.getElementById('codedex-modal');
+    this.container = document.getElementById('codedex-modal');
     this.grid = document.getElementById('codedex-grid');
-    this.collectedStat = document.getElementById('codedex-collected-stat');
-    this.completionPct = document.getElementById('codedex-completion-pct');
     this.searchInput = document.getElementById('codedex-search');
     this.rarityFilterChips = document.querySelectorAll('.rarity-filters .filter-chip');
 
-    this.activeRarityFilter = 'all';
-    this.searchQuery = '';
+    this.collectedStat = document.getElementById('codedex-collected-stat');
+    this.completionPct = document.getElementById('codedex-completion-pct');
+
+    this.activeRarity = 'all';
+    this.searchTerm = '';
 
     this.initEvents();
+    this.subscribeState();
+    this.updateI18n();
   }
 
   initEvents() {
-    this.searchInput.addEventListener('input', (e) => {
-      this.searchQuery = e.target.value.toLowerCase().trim();
+    this.searchInput?.addEventListener('input', (e) => {
+      this.searchTerm = e.target.value.toLowerCase();
       this.renderGrid();
     });
 
     this.rarityFilterChips.forEach(chip => {
       chip.addEventListener('click', () => {
+        sfx.playClick();
         this.rarityFilterChips.forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
-        this.activeRarityFilter = chip.getAttribute('data-rarity') || 'all';
+        this.activeRarity = chip.getAttribute('data-rarity') || 'all';
         this.renderGrid();
       });
     });
 
-    this.state.subscribe(() => {
-      this.updateStats();
-      if (!this.modal.classList.contains('hidden')) {
+    i18n.subscribe(() => {
+      this.updateI18n();
+      this.renderGrid();
+    });
+  }
+
+  subscribeState() {
+    this.state.subscribe((event, data) => {
+      if (event === 'graph_loaded' || event === 'knowledge_updated') {
+        this.updateStats();
         this.renderGrid();
       }
     });
   }
 
   updateStats() {
-    const kMetrics = this.state.knowledgeTracker.calculateKnowledgeMetrics(this.graph);
-    this.collectedStat.textContent = `${kMetrics.discoveredCount} / ${kMetrics.totalCount}`;
-    this.completionPct.textContent = `${kMetrics.discoveredPct}%`;
-  }
+    const tracker = this.state.knowledgeTracker;
+    if (!tracker) return;
 
-  open() {
-    this.modal.classList.remove('hidden');
-    document.getElementById('modal-backdrop').classList.remove('hidden');
-    this.updateStats();
-    this.renderGrid();
-  }
-
-  close() {
-    this.modal.classList.add('hidden');
-    document.getElementById('modal-backdrop').classList.add('hidden');
+    if (this.collectedStat) {
+      this.collectedStat.textContent = `${tracker.discoveredNodes.size} / ${this.state.graph.nodes.size}`;
+    }
+    if (this.completionPct) {
+      this.completionPct.textContent = `${tracker.getCompletionPercentage()}%`;
+    }
   }
 
   renderGrid() {
-    const allNodes = Array.from(this.graph.nodes.values());
-    const filtered = allNodes.filter(node => {
-      const stat = this.analysis.nodeStats.get(node.id);
+    if (!this.grid || !this.state.graph || !this.state.analysis) return;
+
+    const graph = this.state.graph;
+    const analysis = this.state.analysis;
+    const tracker = this.state.knowledgeTracker;
+
+    const nodesList = Array.from(graph.nodes.values());
+
+    const filtered = nodesList.filter(node => {
+      const stat = analysis.nodeStats.get(node.id);
       if (!stat) return false;
 
-      if (this.activeRarityFilter !== 'all' && stat.rarity !== this.activeRarityFilter) {
-        return false;
-      }
-      if (this.searchQuery && !node.name.toLowerCase().includes(this.searchQuery) && !node.path.toLowerCase().includes(this.searchQuery)) {
+      if (this.activeRarity !== 'all' && stat.rarity !== this.activeRarity) return false;
+      if (this.searchTerm && !node.name.toLowerCase().includes(this.searchTerm) && !node.path.toLowerCase().includes(this.searchTerm)) {
         return false;
       }
       return true;
     });
 
-    // Sort by rarity score descending
-    filtered.sort((a, b) => {
-      const statA = this.analysis.nodeStats.get(a.id);
-      const statB = this.analysis.nodeStats.get(b.id);
-      return (statB?.rarityScore || 0) - (statA?.rarityScore || 0);
-    });
+    let index = 1;
+    this.grid.innerHTML = filtered.map(node => {
+      const stat = analysis.nodeStats.get(node.id);
+      const isDiscovered = tracker?.discoveredNodes.has(node.id);
+      const rarityKey = `rarity_${stat.rarity}`;
+      const localizedRarity = i18n.t(rarityKey) || stat.rarity.toUpperCase();
+      const rarityConf = RARITY_CONFIG[stat.rarity] || RARITY_CONFIG.common;
+      const localizedBiome = i18n.t(`biome_${node.biome}`) || node.biome.toUpperCase();
 
-    this.grid.innerHTML = filtered.map((node, idx) => {
-      const stat = this.analysis.nodeStats.get(node.id);
-      const isDiscovered = this.state.unlockedCodeDex.has(node.id);
-      const rarityConf = RARITY_CONFIG[stat?.rarity] || RARITY_CONFIG.common;
+      const numStr = String(index++).padStart(3, '0');
 
       return `
-        <div class="codedex-card" data-node-id="${node.id}" style="border-left: 3px solid ${rarityConf.color}">
+        <div class="codedex-card" data-node-id="${node.id}" style="border-left: 4px solid ${rarityConf.color}">
           <div class="card-top">
-            <span class="card-num">#${String(idx + 1).padStart(3, '0')}</span>
-            <span class="rarity-tag rarity-${stat?.rarity}">${rarityConf.name.toUpperCase()}</span>
+            <span class="card-num">[${numStr}]</span>
+            <span class="rarity-tag rarity-${stat.rarity}">${localizedRarity}</span>
           </div>
-          <div class="card-name">${isDiscovered ? node.name : '??? [UNDISCOVERED]'}</div>
-          <div class="card-path">${isDiscovered ? node.path : 'Explore world to reveal location'}</div>
+          <div class="card-name" title="${node.name}">${isDiscovered ? node.name : i18n.t('codedex_undiscovered')}</div>
+          <div class="card-path" title="${node.path}">${isDiscovered ? node.path : i18n.t('codedex_explore_hint')}</div>
           <div class="card-stats">
-            <span>CENTRALITY: <strong>${stat?.centralityPct}%</strong></span>
-            <span>RISK: <strong>${stat?.riskScore}%</strong></span>
-            <span>CALLS: <strong>${stat?.fanOut}</strong></span>
-            <span>USED BY: <strong>${stat?.fanIn}</strong></span>
+            <span>${i18n.t('inspect_centrality')}: <strong>${isDiscovered ? stat.centralityPct + '%' : '???'}</strong></span>
+            <span>${i18n.t('stat_risk')}: <strong>${isDiscovered ? stat.riskScore + '%' : '???'}</strong></span>
+            <span>FAN-IN: <strong>${isDiscovered ? stat.fanIn : '???'}</strong></span>
+            <span>${localizedBiome}</span>
           </div>
         </div>
       `;
@@ -112,16 +121,31 @@ export class CodeDexView {
 
     this.grid.querySelectorAll('.codedex-card').forEach(card => {
       card.addEventListener('click', () => {
+        sfx.playClick();
         const nodeId = card.getAttribute('data-node-id');
         if (nodeId) {
-          this.close();
+          this.container?.classList.add('hidden');
+          document.getElementById('modal-backdrop')?.classList.add('hidden');
           this.state.setSelectedNode(nodeId);
-          const node = this.graph.getNode(nodeId);
-          if (node) {
-            this.world.camera.centerOn(node.x, node.y);
+          const targetNode = graph.getNode(nodeId);
+          if (targetNode) {
+            this.camera.centerOn(targetNode.x, targetNode.y, 3.5);
           }
         }
       });
     });
+  }
+
+  updateI18n() {
+    const title = document.getElementById('codedex-header-title');
+    if (title) title.textContent = i18n.t('codedex_title');
+
+    const lblCollected = document.getElementById('codedex-lbl-collected');
+    if (lblCollected) lblCollected.textContent = i18n.t('codedex_collected');
+
+    const lblCompletion = document.getElementById('codedex-lbl-completion');
+    if (lblCompletion) lblCompletion.textContent = i18n.t('codedex_completion');
+
+    if (this.searchInput) this.searchInput.placeholder = i18n.t('codedex_search_placeholder');
   }
 }

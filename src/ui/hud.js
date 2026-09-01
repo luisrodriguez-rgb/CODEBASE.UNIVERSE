@@ -1,18 +1,39 @@
 /**
- * Main HUD & Telemetry Coordinator.
+ * Telemetry Bar, Filter Deck, Action Dock & Audio/i18n Coordinator for CODEBASE.UNIVERSE.
  */
 
-export class HudController {
-  constructor(state, graph, analysis, world, views) {
-    this.state = state;
-    this.graph = graph;
-    this.analysis = analysis;
-    this.world = world;
-    this.views = views;
+import { sfx } from '../audio/soundFX.js';
+import { i18n } from '../i18n/translations.js';
 
-    // Top Telemetry Stats
-    this.projectName = document.getElementById('current-project-name');
-    this.healthTag = document.getElementById('system-health-tag');
+export class HudController {
+  constructor(state, manualModal) {
+    this.state = state;
+    this.manualModal = manualModal;
+
+    this.initElements();
+    this.initEvents();
+    this.subscribeState();
+    this.updateI18nLabels();
+  }
+
+  initElements() {
+    this.langToggleBtn = document.getElementById('lang-toggle-btn');
+    this.soundToggleBtn = document.getElementById('sound-toggle-btn');
+
+    this.searchInput = document.getElementById('node-search-input');
+    this.clearSearchBtn = document.getElementById('search-clear-btn');
+    this.filterPills = document.querySelectorAll('.filter-pills .pill');
+    
+    this.zoomLevelBadge = document.getElementById('semantic-zoom-level');
+    this.zoomInBtn = document.getElementById('zoom-in-btn');
+    this.zoomOutBtn = document.getElementById('zoom-out-btn');
+    this.zoomResetBtn = document.getElementById('zoom-reset-btn');
+
+    this.dockTabs = document.querySelectorAll('.dock-tab');
+    this.helpGuideBtn = document.getElementById('help-guide-btn');
+    this.switchProjectBtn = document.getElementById('switch-project-btn');
+
+    // Telemetry labels
     this.statEntities = document.getElementById('stat-entities');
     this.statEdges = document.getElementById('stat-edges');
     this.statRisk = document.getElementById('stat-risk');
@@ -20,162 +41,242 @@ export class HudController {
     this.playerRank = document.getElementById('player-rank');
     this.playerXp = document.getElementById('player-xp');
 
-    // Controls
-    this.searchInput = document.getElementById('node-search-input');
-    this.searchClearBtn = document.getElementById('search-clear-btn');
-    this.filterPills = document.querySelectorAll('.filter-pills .pill');
-    this.zoomBadge = document.getElementById('semantic-zoom-level');
-    this.zoomInBtn = document.getElementById('zoom-in-btn');
-    this.zoomOutBtn = document.getElementById('zoom-out-btn');
-    this.zoomResetBtn = document.getElementById('zoom-reset-btn');
-
-    // Dock Tabs
-    this.dockWorldBtn = document.getElementById('nav-world-btn');
-    this.dockCodedexBtn = document.getElementById('nav-codedex-btn');
-    this.dockQuestsBtn = document.getElementById('nav-quests-btn');
-    this.dockThreatsBtn = document.getElementById('nav-threats-btn');
-    this.dockWhatIfBtn = document.getElementById('nav-whatif-btn');
-    this.dockTimelineBtn = document.getElementById('nav-timeline-btn');
-
-    this.codedexBadge = document.getElementById('codedex-badge');
     this.activeQuestsBadge = document.getElementById('active-quests-badge');
     this.threatCountBadge = document.getElementById('threat-count-badge');
-
-    this.modalBackdrop = document.getElementById('modal-backdrop');
-    this.switchRepoBtn = document.getElementById('switch-project-btn');
-    this.manualBtn = document.getElementById('help-guide-btn');
-
-    this.initEvents();
+    this.codedexBadge = document.getElementById('codedex-badge');
   }
 
   initEvents() {
-    // Search
-    this.searchInput.addEventListener('input', (e) => {
+    // Language Toggle
+    this.langToggleBtn?.addEventListener('click', () => {
+      sfx.playClick();
+      i18n.toggleLanguage();
+      this.updateI18nLabels();
+    });
+
+    // Sound Toggle
+    this.soundToggleBtn?.addEventListener('click', () => {
+      const isMuted = sfx.toggleMute();
+      if (!isMuted) sfx.playClick();
+      this.soundToggleBtn.textContent = isMuted ? '🔇 MUTED' : '🔊 SFX';
+    });
+
+    // Search Input
+    this.searchInput?.addEventListener('input', (e) => {
       this.state.setSearchQuery(e.target.value);
     });
 
-    this.searchClearBtn.addEventListener('click', () => {
-      this.searchInput.value = '';
+    this.clearSearchBtn?.addEventListener('click', () => {
+      sfx.playClick();
+      if (this.searchInput) this.searchInput.value = '';
       this.state.setSearchQuery('');
     });
 
     // Filter Pills
     this.filterPills.forEach(pill => {
       pill.addEventListener('click', () => {
+        sfx.playClick();
         this.filterPills.forEach(p => p.classList.remove('active'));
         pill.classList.add('active');
-        this.state.setFilter(pill.getAttribute('data-filter') || 'all');
+        const filter = pill.getAttribute('data-filter') || 'all';
+        this.state.setActiveFilter(filter);
       });
     });
 
-    // Camera Zoom Controls
-    this.zoomInBtn.addEventListener('click', () => {
-      this.world.camera.targetZoom = Math.min(this.world.camera.maxZoom, this.world.camera.zoom * 1.3);
+    // Bottom Navigation Dock Tabs
+    this.dockTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        sfx.playClick();
+        const tabId = tab.id;
+        this.handleDockTabClick(tabId);
+      });
     });
 
-    this.zoomOutBtn.addEventListener('click', () => {
-      this.world.camera.targetZoom = Math.max(this.world.camera.minZoom, this.world.camera.zoom * 0.7);
+    // Manual Modal Trigger (Replaces alert!)
+    this.helpGuideBtn?.addEventListener('click', () => {
+      sfx.playClick();
+      if (this.manualModal) {
+        this.manualModal.open();
+      }
     });
 
-    this.zoomResetBtn.addEventListener('click', () => {
-      this.world.camera.reset();
+    // Switch Project Trigger
+    this.switchProjectBtn?.addEventListener('click', () => {
+      sfx.playClick();
+      const splash = document.getElementById('title-screen');
+      if (splash) splash.classList.remove('hidden');
     });
 
-    // Dock Navigation
-    this.dockWorldBtn.addEventListener('click', () => {
-      this.closeAllModals();
-      this.setActiveDockTab(this.dockWorldBtn);
-    });
-
-    this.dockCodedexBtn.addEventListener('click', () => {
-      this.closeAllModals();
-      this.setActiveDockTab(this.dockCodedexBtn);
-      this.views.codedex.open();
-    });
-
-    this.dockQuestsBtn.addEventListener('click', () => {
-      this.closeAllModals();
-      this.setActiveDockTab(this.dockQuestsBtn);
-      this.views.quests.open();
-    });
-
-    this.dockThreatsBtn.addEventListener('click', () => {
-      this.closeAllModals();
-      this.setActiveDockTab(this.dockThreatsBtn);
-      this.views.threats.open();
-    });
-
-    this.dockWhatIfBtn.addEventListener('click', () => {
-      this.closeAllModals();
-      this.setActiveDockTab(this.dockWhatIfBtn);
-      this.views.whatif.open();
-    });
-
-    this.dockTimelineBtn.addEventListener('click', () => {
-      this.closeAllModals();
-      this.setActiveDockTab(this.dockTimelineBtn);
-      this.views.timeline.open();
-    });
-
-    // Close buttons & backdrop
-    this.modalBackdrop.addEventListener('click', () => {
-      this.closeAllModals();
-      this.setActiveDockTab(this.dockWorldBtn);
-    });
-
-    document.querySelectorAll('.modal-close-btn').forEach(btn => {
+    // Modal Close buttons
+    document.querySelectorAll('[data-close]').forEach(btn => {
       btn.addEventListener('click', () => {
-        this.closeAllModals();
-        this.setActiveDockTab(this.dockWorldBtn);
+        sfx.playClick();
+        const modalId = btn.getAttribute('data-close');
+        const targetModal = document.getElementById(modalId);
+        if (targetModal) targetModal.classList.add('hidden');
+        document.getElementById('modal-backdrop')?.classList.add('hidden');
       });
     });
 
-    this.switchRepoBtn.addEventListener('click', () => {
-      document.getElementById('title-screen').classList.remove('hidden');
+    // Backdrop Click
+    document.getElementById('modal-backdrop')?.addEventListener('click', () => {
+      sfx.playClick();
+      document.querySelectorAll('.deck-modal').forEach(m => m.classList.add('hidden'));
+      document.getElementById('modal-backdrop')?.classList.add('hidden');
     });
 
-    this.manualBtn.addEventListener('click', () => {
-      alert(`CODEBASE MEMORY MANUAL:\n\n1. Left-click to inspect entity & reveal connections.\n2. Mouse drag to pan; Wheel to semantic zoom.\n3. Complete Quests to earn XP and level up your Architect rank.\n4. Explore CodeDex to collect rare and legendary entities.\n5. Use Threat Arena to simulate refactorings.\n6. Use What-If Lab to test failure impact and blast radius.`);
+    i18n.subscribe(() => {
+      this.updateI18nLabels();
     });
-
-    this.state.subscribe(() => this.updateTelemetry());
   }
 
-  setActiveDockTab(tabEl) {
-    document.querySelectorAll('.dock-tab').forEach(t => t.classList.remove('active'));
-    tabEl.classList.add('active');
+  handleDockTabClick(tabId) {
+    this.dockTabs.forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId)?.classList.add('active');
+
+    // Hide all modal decks
+    document.querySelectorAll('.deck-modal').forEach(m => m.classList.add('hidden'));
+    const backdrop = document.getElementById('modal-backdrop');
+
+    if (tabId === 'nav-world-btn') {
+      backdrop?.classList.add('hidden');
+    } else if (tabId === 'nav-codedex-btn') {
+      document.getElementById('codedex-modal')?.classList.remove('hidden');
+      backdrop?.classList.remove('hidden');
+    } else if (tabId === 'nav-quests-btn') {
+      document.getElementById('quests-modal')?.classList.remove('hidden');
+      backdrop?.classList.remove('hidden');
+    } else if (tabId === 'nav-threats-btn') {
+      document.getElementById('threats-modal')?.classList.remove('hidden');
+      backdrop?.classList.remove('hidden');
+    } else if (tabId === 'nav-whatif-btn') {
+      document.getElementById('whatif-modal')?.classList.remove('hidden');
+      backdrop?.classList.remove('hidden');
+    } else if (tabId === 'nav-timeline-btn') {
+      const drawer = document.getElementById('timeline-drawer');
+      drawer?.classList.toggle('hidden');
+    }
   }
 
-  closeAllModals() {
-    this.views.codedex.close();
-    this.views.quests.close();
-    this.views.threats.close();
-    this.views.whatif.close();
-    this.views.timeline.close();
+  subscribeState() {
+    this.state.subscribe((event, data) => {
+      if (event === 'knowledge_updated' || event === 'quest_completed' || event === 'threat_refactored') {
+        this.updateTelemetryMetrics();
+      }
+    });
   }
 
-  updateTelemetry() {
-    const kMetrics = this.state.knowledgeTracker.calculateKnowledgeMetrics(this.graph);
-    const metrics = this.analysis.systemMetrics;
+  updateTelemetryMetrics() {
+    const analysis = this.state.analysis;
+    if (!analysis) return;
 
-    this.statEntities.textContent = String(metrics.totalEntities);
-    this.statEdges.textContent = String(metrics.totalEdges);
-    this.statRisk.textContent = `${metrics.avgRisk}%`;
-    this.statRisk.className = `metric-value ${metrics.avgRisk > 60 ? 'risk-high' : metrics.avgRisk > 35 ? 'risk-medium' : 'risk-low'}`;
+    if (this.statEntities) this.statEntities.textContent = analysis.totalNodes;
+    if (this.statEdges) this.statEdges.textContent = analysis.totalEdges;
+    if (this.statRisk) {
+      this.statRisk.textContent = `${analysis.overallRiskScore}%`;
+      this.statRisk.className = `metric-value ${analysis.overallRiskScore > 60 ? 'risk-high' : 'risk-medium'}`;
+    }
 
-    this.healthTag.textContent = metrics.healthStatus;
-    this.healthTag.className = `status-tag status-${metrics.healthStatus.toLowerCase()}`;
+    const knowledgePct = this.state.knowledgeTracker?.getCompletionPercentage() || 0;
+    if (this.statKnowledge) this.statKnowledge.textContent = `${knowledgePct}%`;
+    if (this.codedexBadge) this.codedexBadge.textContent = `${knowledgePct}%`;
 
-    this.statKnowledge.textContent = `${kMetrics.overallKnowledgePct}%`;
-    this.playerXp.textContent = `${this.state.xp.toLocaleString()} XP`;
-    this.playerRank.textContent = this.state.knowledgeTracker.getRank(this.state.xp);
+    const xp = this.state.knowledgeTracker?.totalXP || 0;
+    const rank = this.state.knowledgeTracker?.getRankTitle() || 'INTERN';
+    if (this.playerRank) this.playerRank.textContent = rank;
+    if (this.playerXp) this.playerXp.textContent = `${xp.toLocaleString()} XP`;
 
-    this.codedexBadge.textContent = `${kMetrics.discoveredPct}%`;
-    const pendingQuests = this.state.activeQuests.filter(q => !q.completed).length;
-    this.activeQuestsBadge.textContent = `${pendingQuests} ACTIVE`;
-    this.threatCountBadge.textContent = `${metrics.threatCount} DETECTED`;
+    const activeQuests = this.state.quests?.filter(q => !q.completed).length || 0;
+    if (this.activeQuestsBadge) {
+      this.activeQuestsBadge.textContent = `${activeQuests} ${i18n.t('active_badge')}`;
+    }
 
-    // Semantic zoom badge
-    this.zoomBadge.textContent = this.world.camera.getSemanticZoomTier().label;
+    const threatCount = analysis.threats?.length || 0;
+    if (this.threatCountBadge) {
+      this.threatCountBadge.textContent = `${threatCount} ${i18n.t('detected_badge')}`;
+    }
+  }
+
+  updateI18nLabels() {
+    if (this.langToggleBtn) {
+      this.langToggleBtn.textContent = i18n.currentLang === 'es' ? '🌐 ES / EN' : '🌐 EN / ES';
+    }
+
+    // Top Header
+    const brandHeader = document.getElementById('brand-header-title');
+    if (brandHeader) brandHeader.textContent = i18n.t('brand_title');
+
+    const projectTag = document.getElementById('label-project-tag');
+    if (projectTag) projectTag.textContent = i18n.t('project_label');
+
+    const lblEntities = document.getElementById('lbl-entities');
+    if (lblEntities) lblEntities.textContent = i18n.t('stat_entities');
+
+    const lblEdges = document.getElementById('lbl-edges');
+    if (lblEdges) lblEdges.textContent = i18n.t('stat_edges');
+
+    const lblRisk = document.getElementById('lbl-risk');
+    if (lblRisk) lblRisk.textContent = i18n.t('stat_risk');
+
+    const lblKnowledge = document.getElementById('lbl-knowledge');
+    if (lblKnowledge) lblKnowledge.textContent = i18n.t('stat_knowledge');
+
+    const lblRank = document.getElementById('lbl-rank');
+    if (lblRank) lblRank.textContent = i18n.t('stat_rank');
+
+    // Search Box & Filters
+    if (this.searchInput) this.searchInput.placeholder = i18n.t('search_placeholder');
+
+    const pillAll = document.getElementById('filter-pill-all');
+    if (pillAll) pillAll.textContent = i18n.t('filter_all');
+
+    const pillMod = document.getElementById('filter-pill-modules');
+    if (pillMod) pillMod.textContent = i18n.t('filter_modules');
+
+    const pillFunc = document.getElementById('filter-pill-functions');
+    if (pillFunc) pillFunc.textContent = i18n.t('filter_functions');
+
+    const pillHot = document.getElementById('filter-pill-hotspots');
+    if (pillHot) pillHot.textContent = i18n.t('filter_hotspots');
+
+    const pillCyc = document.getElementById('filter-pill-cycles');
+    if (pillCyc) pillCyc.textContent = i18n.t('filter_cycles');
+
+    const pillThreat = document.getElementById('filter-pill-threats');
+    if (pillThreat) pillThreat.textContent = i18n.t('filter_threats');
+
+    const pillUnused = document.getElementById('filter-pill-unused');
+    if (pillUnused) pillUnused.textContent = i18n.t('filter_unused');
+
+    // Minimap & Reset
+    const minimapLbl = document.getElementById('minimap-label-text');
+    if (minimapLbl) minimapLbl.textContent = i18n.t('radar_title');
+
+    const zoomReset = document.getElementById('zoom-reset-btn');
+    if (zoomReset) zoomReset.textContent = i18n.t('cam_reset');
+
+    // Dock text
+    const dockWorld = document.getElementById('dock-text-world');
+    if (dockWorld) dockWorld.textContent = i18n.t('dock_world');
+
+    const dockCodedex = document.getElementById('dock-text-codedex');
+    if (dockCodedex) dockCodedex.textContent = i18n.t('dock_codedex');
+
+    const dockQuests = document.getElementById('dock-text-quests');
+    if (dockQuests) dockQuests.textContent = i18n.t('dock_quests');
+
+    const dockThreats = document.getElementById('dock-text-threats');
+    if (dockThreats) dockThreats.textContent = i18n.t('dock_threats');
+
+    const dockWhatif = document.getElementById('dock-text-whatif');
+    if (dockWhatif) dockWhatif.textContent = i18n.t('dock_whatif');
+
+    const dockTimeline = document.getElementById('dock-text-timeline');
+    if (dockTimeline) dockTimeline.textContent = i18n.t('dock_timeline');
+
+    if (this.switchProjectBtn) this.switchProjectBtn.textContent = i18n.t('dock_switch_repo');
+    if (this.helpGuideBtn) this.helpGuideBtn.textContent = i18n.t('dock_manual');
+
+    this.updateTelemetryMetrics();
   }
 }

@@ -95,7 +95,7 @@
 .metrics-strip {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
 }
 
 .metric-item {
@@ -103,7 +103,7 @@
   flex-direction: column;
   align-items: flex-end;
   border-left: 1px solid var(--border-subtle);
-  padding-left: 14px;
+  padding-left: 12px;
 }
 
 .metric-label {
@@ -126,6 +126,30 @@
   font-size: 10px;
   color: var(--accent-amber);
   font-weight: 600;
+}
+
+.header-toggles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 12px;
+}
+
+.toggle-btn {
+  background: rgba(23, 32, 51, 0.8);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+
+.toggle-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: var(--accent-cyan);
+  color: #fff;
 }
 
 /* World Container & Canvas */

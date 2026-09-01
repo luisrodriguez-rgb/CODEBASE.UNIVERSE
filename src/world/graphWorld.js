@@ -1,16 +1,16 @@
 /**
  * High-Performance Visual Graph World Renderer.
- * - Clean, non-overlapping typography with anti-clutter LOD
- * - Luminous Biome Sector Territories with ambient neon aura
- * - Curved bezier energy arcs with dynamic direction
- * - Cyber Hover Tooltip & Crosshairs HUD
- * - Tactical holographic radar minimap
+ * - Deep precision zoom & WASD keyboard panning
+ * - 20px hit-testing tolerance with nearest-neighbor selection
+ * - Animated Cyber Targeting Reticle on Selected Node
+ * - Screen-space HUD hover card with live bilingual support
  */
 
 import { WorldCamera } from './camera.js';
 import { WorldLayout, BIOME_SECTORS } from './layout.js';
 import { WorldEffects } from './effects.js';
 import { BIOME_CONFIG, RARITY_CONFIG } from '../analysis/types.js';
+import { i18n } from '../i18n/translations.js';
 
 export class GraphWorld {
   constructor(canvas, minimapCanvas, graph, analysis, state) {
@@ -57,43 +57,76 @@ export class GraphWorld {
 
       if (this.camera.isDragging) return;
 
-      const worldPos = this.camera.screenToWorld(e.clientX, e.clientY);
+      const worldPos = this.camera.screenToWorld(this.mouseScreenX, this.mouseScreenY);
       const hitNode = this.hitTest(worldPos.x, worldPos.y);
       this.hoveredNodeId = hitNode ? hitNode.id : null;
       this.canvas.style.cursor = hitNode ? 'pointer' : 'crosshair';
     });
 
+    // Single Click: Select node & open inspector
     this.canvas.addEventListener('click', (e) => {
-      const worldPos = this.camera.screenToWorld(e.clientX, e.clientY);
+      const rect = this.canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      const worldPos = this.camera.screenToWorld(clickX, clickY);
       const hitNode = this.hitTest(worldPos.x, worldPos.y);
       if (hitNode) {
         this.state.setSelectedNode(hitNode.id);
-        this.camera.centerOn(hitNode.x, hitNode.y, 1.2);
+      }
+    });
+
+    // Double Click: Center camera and zoom in deeply (3.0x magnification)
+    this.canvas.addEventListener('dblclick', (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      const worldPos = this.camera.screenToWorld(clickX, clickY);
+      const hitNode = this.hitTest(worldPos.x, worldPos.y);
+      if (hitNode) {
+        this.state.setSelectedNode(hitNode.id);
+        this.camera.centerOn(hitNode.x, hitNode.y, 3.5);
+      } else {
+        this.camera.centerOn(worldPos.x, worldPos.y, this.camera.zoom * 2.0);
       }
     });
   }
 
+  /**
+   * Spatial Hit-Testing with 20px expanded tolerance and nearest-neighbor selection.
+   */
   hitTest(x, y) {
+    let closestNode = null;
+    let closestDistSq = Infinity;
+
     for (const node of this.graph.nodes.values()) {
       const stat = this.analysis.nodeStats.get(node.id);
       const radius = this.getNodeRadius(node, stat);
+      const hitTolerance = Math.max(18, radius + 12);
+
       const dx = node.x - x;
       const dy = node.y - y;
-      if (dx * dx + dy * dy <= (radius + 6) * (radius + 6)) {
-        return node;
+      const distSq = dx * dx + dy * dy;
+
+      if (distSq <= hitTolerance * hitTolerance) {
+        if (distSq < closestDistSq) {
+          closestDistSq = distSq;
+          closestNode = node;
+        }
       }
     }
-    return null;
+    return closestNode;
   }
 
   getNodeRadius(node, stat) {
     if (!stat) return 4;
-    if (stat.archetype === 'threat_boss') return 9;
-    if (stat.archetype === 'healthy_core') return 7.5;
-    if (stat.rarity === 'legendary') return 6.5;
-    if (stat.rarity === 'epic') return 5.5;
-    if (stat.rarity === 'rare') return 4.5;
-    return 3.5;
+    if (stat.archetype === 'threat_boss') return 9.5;
+    if (stat.archetype === 'healthy_core') return 8;
+    if (stat.rarity === 'legendary') return 7;
+    if (stat.rarity === 'epic') return 6;
+    if (stat.rarity === 'rare') return 5;
+    return 4;
   }
 
   start() {
@@ -105,7 +138,7 @@ export class GraphWorld {
       lastTime = currentTime;
       this.time += dt;
 
-      // Physics layout relaxation step
+      // Physics layout step
       this.layout.step(0.04);
       this.camera.update();
       this.effects.update();
@@ -143,20 +176,20 @@ export class GraphWorld {
     const width = this.displayWidth || this.canvas.width;
     const height = this.displayHeight || this.canvas.height;
 
-    // 1. Deep Space Void Background with Grid
+    // 1. Deep Space Grid Background
     this.renderSpaceBackground(ctx, width, height, camera);
 
     ctx.save();
     ctx.translate(width / 2 + camera.x * camera.zoom, height / 2 + camera.y * camera.zoom);
     ctx.scale(camera.zoom, camera.zoom);
 
-    // 2. Biome Sector Territories & Continental Islands
+    // 2. Biome Sector Territory Continents
     this.renderBiomeTerritories(ctx);
 
-    // 3. Curved Energy Edges
+    // 3. Curved Energy Flow Conduits
     this.renderCurvedEdges(ctx, graph, analysis, state, effects);
 
-    // 4. Luminous Celestial Nodes & Anti-Clutter Labels
+    // 4. Luminous Celestial Entities & Anti-Clutter Labels
     this.renderCelestialNodes(ctx, graph, analysis, state, effects, camera);
 
     // 5. Active FX (Shockwaves, Data Pulses)
@@ -172,9 +205,8 @@ export class GraphWorld {
     ctx.fillStyle = '#050811';
     ctx.fillRect(0, 0, width, height);
 
-    // Subtle Cyber Grid
     ctx.save();
-    ctx.strokeStyle = 'rgba(30, 41, 59, 0.25)';
+    ctx.strokeStyle = 'rgba(30, 41, 59, 0.2)';
     ctx.lineWidth = 1;
 
     const gridSize = 60 * camera.zoom;
@@ -198,6 +230,8 @@ export class GraphWorld {
     ctx.save();
     for (const sector of Object.values(BIOME_SECTORS)) {
       const conf = BIOME_CONFIG[sector.id] || BIOME_CONFIG.core;
+      const localizedName = i18n.t(`biome_${sector.id}`) || sector.name;
+      const localizedDesc = i18n.t(`biome_${sector.id}_desc`) || conf.desc;
       
       // Territory Soft Ambient Nebula Glow
       const glow = ctx.createRadialGradient(sector.x, sector.y, 10, sector.x, sector.y, sector.radius + 50);
@@ -210,7 +244,7 @@ export class GraphWorld {
       ctx.arc(sector.x, sector.y, sector.radius + 50, 0, Math.PI * 2);
       ctx.fill();
 
-      // Territory Border Shield (Smooth Glowing Dashed Ring)
+      // Territory Shield Ring
       ctx.strokeStyle = `${conf.color}35`;
       ctx.lineWidth = 1.2;
       ctx.setLineDash([6, 8]);
@@ -224,10 +258,10 @@ export class GraphWorld {
       ctx.translate(sector.x, sector.y - sector.radius - 24);
       
       ctx.font = '700 11px JetBrains Mono';
-      const textWidth = ctx.measureText(sector.name).width;
+      const textWidth = ctx.measureText(localizedName).width;
       
-      // Badge background pill
-      ctx.fillStyle = 'rgba(8, 12, 22, 0.85)';
+      // Badge pill background
+      ctx.fillStyle = 'rgba(8, 12, 22, 0.88)';
       ctx.strokeStyle = `${conf.color}60`;
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -239,12 +273,12 @@ export class GraphWorld {
       ctx.fillStyle = conf.color;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(sector.name, 0, 0);
+      ctx.fillText(localizedName, 0, 0);
 
       // Subtitle
       ctx.font = '400 9px JetBrains Mono';
       ctx.fillStyle = '#64748b';
-      ctx.fillText(conf.desc, 0, 18);
+      ctx.fillText(localizedDesc, 0, 18);
       ctx.restore();
     }
     ctx.restore();
@@ -263,7 +297,6 @@ export class GraphWorld {
 
       const isConnectedToActive = activeTarget && (edge.source === activeTarget || edge.target === activeTarget);
       const isBlackout = effects.blackoutNodes.has(edge.source) || effects.blackoutNodes.has(edge.target);
-
       const isSameBiome = src.biome === tgt.biome;
 
       if (isBlackout) {
@@ -272,22 +305,20 @@ export class GraphWorld {
       } else if (isConnectedToActive) {
         const isOutgoing = edge.source === activeTarget;
         ctx.strokeStyle = isOutgoing ? '#f59e0b' : '#38bdf8';
-        ctx.lineWidth = 1.8;
+        ctx.lineWidth = 2.0;
         ctx.shadowColor = ctx.strokeStyle;
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 8;
       } else if (activeTarget) {
-        // Dim non-connected lines when an entity is focused
         ctx.strokeStyle = 'rgba(15, 23, 42, 0.15)';
         ctx.lineWidth = 0.3;
         ctx.shadowBlur = 0;
       } else {
-        // Default clean subtle arc
         ctx.strokeStyle = isSameBiome ? 'rgba(56, 189, 248, 0.12)' : 'rgba(148, 163, 184, 0.06)';
         ctx.lineWidth = isSameBiome ? 0.8 : 0.5;
         ctx.shadowBlur = 0;
       }
 
-      // Draw subtle curved quadratic bezier arc
+      // Smooth curved arc
       const mx = (src.x + tgt.x) / 2;
       const my = (src.y + tgt.y) / 2;
       const dx = tgt.x - src.x;
@@ -311,14 +342,12 @@ export class GraphWorld {
     const filter = state.activeFilter;
     const search = state.searchQuery;
 
-    // Collect labels to draw so we render them in a clean pass without overlapping
     const labelsToDraw = [];
 
     for (const node of graph.nodes.values()) {
       const stat = analysis.nodeStats.get(node.id);
       if (!stat) continue;
 
-      // Filter checks
       let visible = true;
       if (filter === 'modules' && node.type !== 'module' && node.type !== 'project') visible = false;
       if (filter === 'functions' && node.type !== 'function') visible = false;
@@ -343,7 +372,6 @@ export class GraphWorld {
       ctx.translate(node.x, node.y);
 
       if (isBlackout) {
-        // Blackout Ghost Node
         ctx.beginPath();
         ctx.arc(0, 0, Math.max(2, radius * 0.7), 0, Math.PI * 2);
         ctx.fillStyle = '#0f172a';
@@ -352,20 +380,24 @@ export class GraphWorld {
         ctx.fill();
         ctx.stroke();
       } else if (!visible) {
-        // Dimmed node
         ctx.beginPath();
         ctx.arc(0, 0, Math.max(1.5, radius * 0.5), 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(30, 41, 59, 0.2)';
         ctx.fill();
       } else {
-        // Luminous Outer Halo on Hover/Select/Boss
-        if (isSelected || isHovered) {
+        // Animated Targeting Reticle on Selected Node
+        if (isSelected) {
+          this.renderTargetReticle(ctx, radius);
+        }
+
+        // Luminous Outer Halo on Hover or Boss
+        if (isHovered) {
           const pulseScale = 1 + Math.sin(this.time * 6) * 0.15;
           ctx.beginPath();
           ctx.arc(0, 0, (radius + 6) * pulseScale, 0, Math.PI * 2);
-          ctx.fillStyle = isSelected ? 'rgba(56, 189, 248, 0.25)' : 'rgba(245, 158, 11, 0.2)';
+          ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
           ctx.fill();
-          ctx.strokeStyle = isSelected ? '#38bdf8' : '#f59e0b';
+          ctx.strokeStyle = '#f59e0b';
           ctx.lineWidth = 1.5;
           ctx.stroke();
         } else if (isBoss) {
@@ -379,7 +411,7 @@ export class GraphWorld {
           ctx.stroke();
         }
 
-        // Cyclic Anomaly Subtle Indicator
+        // Cyclic Warning Ring
         if (isCyclic && !isBoss) {
           ctx.beginPath();
           ctx.arc(0, 0, radius + 2.5, 0, Math.PI * 2);
@@ -388,22 +420,23 @@ export class GraphWorld {
           ctx.stroke();
         }
 
-        // Node Body Orb
+        // Node Body
         ctx.beginPath();
         ctx.arc(0, 0, radius, 0, Math.PI * 2);
         ctx.fillStyle = isBoss ? '#f43f5e' : rarityColor;
         ctx.fill();
 
-        // Inner Specular Core
+        // Inner Core
         ctx.beginPath();
         ctx.arc(0, 0, Math.max(1, radius * 0.4), 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
 
-        // Intelligent Label Culling (STRICT ANTI-CLUTTER LOD)
-        // Never show labels for ordinary nodes unless hovered or selected!
+        // Anti-Clutter Label Logic:
+        // Always show label when selected or hovered, or when zoomed in deeply (zoom >= 1.8),
+        // or for primary landmarks at medium zoom.
         const isKeyLandmark = stat.centralityPct >= 96 || (isBoss && stat.riskScore >= 80);
-        if (isSelected || isHovered || (camera.zoom >= 0.9 && isKeyLandmark)) {
+        if (isSelected || isHovered || camera.zoom >= 2.0 || (camera.zoom >= 0.9 && isKeyLandmark)) {
           labelsToDraw.push({
             node,
             stat,
@@ -418,10 +451,37 @@ export class GraphWorld {
       ctx.restore();
     }
 
-    // Render cleanly formatted, non-overlapping label badges
+    // Render clean, non-overlapping label badges
     for (const item of labelsToDraw) {
       this.renderNodeLabelBadge(ctx, item);
     }
+  }
+
+  renderTargetReticle(ctx, radius) {
+    ctx.save();
+    const reticleRadius = radius + 9;
+    const rot = this.time * 1.5;
+
+    ctx.rotate(rot);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.5;
+
+    // Draw 4 corner reticle brackets
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath();
+      ctx.arc(0, 0, reticleRadius, i * (Math.PI / 2) + 0.25, (i + 1) * (Math.PI / 2) - 0.25);
+      ctx.stroke();
+    }
+
+    // Reticle crosshair dots
+    ctx.fillStyle = '#38bdf8';
+    for (let i = 0; i < 4; i++) {
+      const angle = i * (Math.PI / 2);
+      ctx.beginPath();
+      ctx.arc(Math.cos(angle) * (reticleRadius + 4), Math.sin(angle) * (reticleRadius + 4), 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   renderNodeLabelBadge(ctx, { node, stat, isSelected, isHovered, radius, color }) {
@@ -432,7 +492,6 @@ export class GraphWorld {
     const text = node.name;
     const textWidth = ctx.measureText(text).width;
 
-    // Dark Frosted Pill Background
     ctx.fillStyle = 'rgba(7, 10, 18, 0.92)';
     ctx.strokeStyle = (isSelected || isHovered) ? color : 'rgba(56, 189, 248, 0.3)';
     ctx.lineWidth = 1;
@@ -441,7 +500,6 @@ export class GraphWorld {
     ctx.fill();
     ctx.stroke();
 
-    // Text Label
     ctx.fillStyle = (isSelected || isHovered) ? '#ffffff' : '#e2e8f0';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
@@ -457,12 +515,14 @@ export class GraphWorld {
     const stat = this.analysis.nodeStats.get(this.hoveredNodeId);
     if (!node || !stat) return;
 
+    const rarityKey = `rarity_${stat.rarity}`;
+    const localizedRarity = i18n.t(rarityKey) || stat.rarity.toUpperCase();
     const rarityConf = RARITY_CONFIG[stat.rarity] || RARITY_CONFIG.common;
-    const biomeConf = BIOME_CONFIG[node.biome] || BIOME_CONFIG.core;
+    const localizedBiome = i18n.t(`biome_${node.biome}`) || node.biome.toUpperCase();
 
     const padding = 14;
-    const cardWidth = 260;
-    const cardHeight = 135;
+    const cardWidth = 270;
+    const cardHeight = 140;
 
     let posX = this.mouseScreenX + 18;
     let posY = this.mouseScreenY + 18;
@@ -473,11 +533,11 @@ export class GraphWorld {
     ctx.save();
     ctx.translate(posX, posY);
 
-    // Glassmorphic Card Background
-    ctx.fillStyle = 'rgba(10, 15, 26, 0.94)';
+    // Glassmorphic Card
+    ctx.fillStyle = 'rgba(10, 15, 26, 0.95)';
     ctx.strokeStyle = rarityConf.color;
     ctx.lineWidth = 1;
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
     ctx.shadowBlur = 16;
     ctx.beginPath();
     ctx.roundRect(0, 0, cardWidth, cardHeight, 6);
@@ -485,7 +545,7 @@ export class GraphWorld {
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Card Header: Name & Biome
+    // Header
     ctx.font = '700 12px JetBrains Mono';
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'left';
@@ -496,37 +556,37 @@ export class GraphWorld {
     ctx.fillStyle = '#94a3b8';
     ctx.fillText(node.path, padding, padding + 16);
 
-    // Tags strip (Rarity & Biome)
+    // Tags
     ctx.font = '700 9px JetBrains Mono';
     ctx.fillStyle = rarityConf.color;
-    ctx.fillText(`[${rarityConf.name.toUpperCase()}]`, padding, padding + 34);
+    ctx.fillText(`[${localizedRarity}]`, padding, padding + 34);
 
-    ctx.fillStyle = biomeConf.color;
-    ctx.fillText(`SECTOR: ${biomeConf.name.toUpperCase()}`, padding + 85, padding + 34);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillText(`${localizedBiome}`, padding + 90, padding + 34);
 
     // Metrics Grid
     const yStart = padding + 54;
     ctx.font = '400 9.5px JetBrains Mono';
     ctx.fillStyle = '#94a3b8';
 
-    ctx.fillText(`CENTRALITY:`, padding, yStart);
+    ctx.fillText(`${i18n.t('inspect_centrality')}:`, padding, yStart);
     ctx.fillStyle = '#38bdf8';
-    ctx.fillText(`${stat.centralityPct}%`, padding + 85, yStart);
+    ctx.fillText(`${stat.centralityPct}%`, padding + 95, yStart);
 
     ctx.fillStyle = '#94a3b8';
-    ctx.fillText(`RISK:`, padding + 135, yStart);
+    ctx.fillText(`${i18n.t('stat_risk')}:`, padding + 145, yStart);
     ctx.fillStyle = stat.riskScore > 65 ? '#f43f5e' : stat.riskScore > 35 ? '#f59e0b' : '#10b981';
-    ctx.fillText(`${stat.riskScore}%`, padding + 175, yStart);
+    ctx.fillText(`${stat.riskScore}%`, padding + 195, yStart);
 
     ctx.fillStyle = '#94a3b8';
-    ctx.fillText(`FAN-IN (CALLERS):`, padding, yStart + 18);
+    ctx.fillText(`FAN-IN (${i18n.t('inspect_callers').split(' ')[0]}):`, padding, yStart + 20);
     ctx.fillStyle = '#f1f5f9';
-    ctx.fillText(`${stat.fanIn}`, padding + 120, yStart + 18);
+    ctx.fillText(`${stat.fanIn}`, padding + 130, yStart + 20);
 
     ctx.fillStyle = '#94a3b8';
-    ctx.fillText(`FAN-OUT (DEPS):`, padding, yStart + 34);
+    ctx.fillText(`FAN-OUT (${i18n.t('inspect_deps').split(' ')[0]}):`, padding, yStart + 36);
     ctx.fillStyle = '#f1f5f9';
-    ctx.fillText(`${stat.fanOut}`, padding + 120, yStart + 34);
+    ctx.fillText(`${stat.fanOut}`, padding + 130, yStart + 36);
 
     ctx.restore();
   }
@@ -543,7 +603,6 @@ export class GraphWorld {
     const cx = w / 2;
     const cy = h / 2;
 
-    // Draw miniature sector boundary circles
     for (const sector of Object.values(BIOME_SECTORS)) {
       const conf = BIOME_CONFIG[sector.id] || BIOME_CONFIG.core;
       miniCtx.strokeStyle = `${conf.color}33`;
@@ -553,7 +612,6 @@ export class GraphWorld {
       miniCtx.stroke();
     }
 
-    // Draw miniature nodes
     for (const node of graph.nodes.values()) {
       const stat = analysis.nodeStats.get(node.id);
       const nx = cx + node.x * scale;
@@ -564,7 +622,6 @@ export class GraphWorld {
       miniCtx.fillRect(nx, ny, 1.5, 1.5);
     }
 
-    // Draw camera viewport bounds
     const vpW = ((this.displayWidth || this.canvas.width) / camera.zoom) * scale;
     const vpH = ((this.displayHeight || this.canvas.height) / camera.zoom) * scale;
     const vpX = cx - (camera.x) * scale - vpW / 2;

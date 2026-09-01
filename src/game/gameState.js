@@ -1,5 +1,5 @@
 /**
- * Central Reactive Game State Container.
+ * Central Reactive Game State Container for CODEBASE.UNIVERSE.
  */
 
 import { KnowledgeTracker } from './knowledgeTracker.js';
@@ -7,16 +7,29 @@ import { KnowledgeTracker } from './knowledgeTracker.js';
 export class GameState {
   constructor() {
     this.currentProject = 'sketion';
-    this.xp = 1450;
+    this.graph = null;
+    this.analysis = null;
+    this.quests = [];
+    this.activeQuests = [];
     this.knowledgeTracker = new KnowledgeTracker();
     this.activeFilter = 'all';
     this.searchQuery = '';
     this.selectedNodeId = null;
-    this.activeQuests = [];
     this.unlockedCodeDex = new Set();
     this.simulationState = null;
     this.activeCommitGen = null;
     this.listeners = new Set();
+  }
+
+  setGraph(graph, analysis, quests) {
+    this.graph = graph;
+    this.analysis = analysis;
+    this.quests = quests || [];
+    this.activeQuests = this.quests;
+    if (graph) {
+      this.knowledgeTracker.totalNodesCount = graph.nodes.size;
+    }
+    this.notify('graph_loaded', { graph, analysis, quests });
   }
 
   subscribe(listener) {
@@ -24,15 +37,19 @@ export class GameState {
     return () => this.listeners.delete(listener);
   }
 
-  notify() {
+  notify(event = 'state_updated', data = {}) {
     for (const listener of this.listeners) {
-      listener(this);
+      try {
+        listener(event, data, this);
+      } catch (err) {
+        console.error('State listener error:', err);
+      }
     }
   }
 
   addXp(amount) {
-    this.xp += amount;
-    this.notify();
+    this.knowledgeTracker.addXP(amount);
+    this.notify('knowledge_updated', { xp: this.knowledgeTracker.totalXP });
   }
 
   setSelectedNode(nodeId) {
@@ -43,30 +60,42 @@ export class GameState {
       if (isNew) {
         this.addXp(50);
       }
-      // Check quest completion triggers
       this.checkQuestsOnSelect(nodeId);
     }
-    this.notify();
+    this.notify('node_selected', { nodeId });
   }
 
   checkQuestsOnSelect(nodeId) {
-    for (const quest of this.activeQuests) {
-      if (!quest.completed && quest.targetId === nodeId) {
+    for (const quest of this.quests) {
+      if (!quest.completed && quest.targetNodeId === nodeId) {
         quest.completed = true;
         this.knowledgeTracker.markUnderstood(nodeId);
-        this.addXp(quest.rewardXp);
+        this.addXp(quest.rewardXP || 500);
+        this.notify('quest_completed', { questId: quest.id });
       }
     }
   }
 
-  setFilter(filter) {
+  completeQuest(questId) {
+    const quest = this.quests.find(q => q.id === questId);
+    if (quest && !quest.completed) {
+      quest.completed = true;
+      if (quest.targetNodeId) {
+        this.knowledgeTracker.markUnderstood(quest.targetNodeId);
+      }
+      this.addXp(quest.rewardXP || 500);
+      this.notify('quest_completed', { questId });
+    }
+  }
+
+  setActiveFilter(filter) {
     this.activeFilter = filter;
-    this.notify();
+    this.notify('filter_changed', { filter });
   }
 
   setSearchQuery(query) {
-    this.searchQuery = query.toLowerCase().trim();
-    this.notify();
+    this.searchQuery = (query || '').toLowerCase().trim();
+    this.notify('search_changed', { query: this.searchQuery });
   }
 }
 

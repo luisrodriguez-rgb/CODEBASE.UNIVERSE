@@ -1,68 +1,66 @@
 /**
- * Architectural Threat Arena & Refactor Strategy Simulator Controller.
+ * Threat Arena & Refactor Strategy Simulator Controller for CODEBASE.UNIVERSE.
  */
 
 import { simulateRefactoring } from '../simulation/refactorSimulation.js';
+import { sfx } from '../audio/soundFX.js';
+import { i18n } from '../i18n/translations.js';
 
-export class ThreatView {
-  constructor(state, graph, analysis, world) {
+export class ThreatViewController {
+  constructor(state, camera) {
     this.state = state;
-    this.graph = graph;
-    this.analysis = analysis;
-    this.world = world;
+    this.camera = camera;
 
-    this.modal = document.getElementById('threats-modal');
+    this.container = document.getElementById('threats-modal');
     this.sidebarList = document.getElementById('threats-sidebar-list');
-    this.dossier = document.getElementById('active-threat-dossier');
+    this.dossierContainer = document.getElementById('active-threat-dossier');
 
-    this.selectedThreatId = null;
+    this.activeThreatIndex = 0;
     this.activeStrategy = 'break_cycle';
 
     this.initEvents();
+    this.subscribeState();
+    this.updateI18n();
   }
 
   initEvents() {
-    this.state.subscribe(() => {
-      if (!this.modal.classList.contains('hidden')) {
+    i18n.subscribe(() => {
+      this.updateI18n();
+      this.renderSidebar();
+      this.renderDossier();
+    });
+  }
+
+  subscribeState() {
+    this.state.subscribe((event, data) => {
+      if (event === 'graph_loaded' || event === 'threat_refactored') {
         this.renderSidebar();
         this.renderDossier();
       }
     });
   }
 
-  open() {
-    this.modal.classList.remove('hidden');
-    document.getElementById('modal-backdrop').classList.remove('hidden');
-    if (!this.selectedThreatId && this.analysis.threats.length > 0) {
-      this.selectedThreatId = this.analysis.threats[0].id;
-    }
-    this.renderSidebar();
-    this.renderDossier();
-  }
-
-  close() {
-    this.modal.classList.add('hidden');
-    document.getElementById('modal-backdrop').classList.add('hidden');
-  }
-
   renderSidebar() {
-    const threats = this.analysis.threats;
-    this.sidebarList.innerHTML = threats.map(t => {
-      const isActive = t.id === this.selectedThreatId;
+    if (!this.sidebarList || !this.state.analysis) return;
+    const threats = this.state.analysis.threats || [];
+
+    this.sidebarList.innerHTML = threats.map((th, idx) => {
+      const node = this.state.graph.getNode(th.id);
       return `
-        <li class="threat-list-item ${isActive ? 'active' : ''}" data-threat-id="${t.id}">
-          <span class="threat-item-name">${t.name}</span>
+        <li class="threat-list-item ${idx === this.activeThreatIndex ? 'active' : ''}" data-threat-index="${idx}">
+          <div class="threat-item-name">${th.titleAlias}</div>
           <div class="threat-item-meta">
-            <span class="risk-high">RISK ${t.riskScore}%</span>
-            <span>${t.fanIn} dependents</span>
+            <span>${node?.name || th.id}</span>
+            <span style="color:var(--accent-rose);font-weight:700;">${th.riskScore}% RISK</span>
           </div>
         </li>
       `;
-    }).join('') || '<li style="padding:16px; color:var(--text-muted);">No critical threats detected. System is clean.</li>';
+    }).join('');
 
-    this.sidebarList.querySelectorAll('.threat-list-item').forEach(el => {
-      el.addEventListener('click', () => {
-        this.selectedThreatId = el.getAttribute('data-threat-id');
+    this.sidebarList.querySelectorAll('.threat-list-item').forEach(item => {
+      item.addEventListener('click', () => {
+        sfx.playClick();
+        this.activeThreatIndex = parseInt(item.getAttribute('data-threat-index'), 10);
         this.renderSidebar();
         this.renderDossier();
       });
@@ -70,108 +68,122 @@ export class ThreatView {
   }
 
   renderDossier() {
-    if (!this.selectedThreatId) {
-      this.dossier.innerHTML = '<div style="color:var(--text-muted);">Select a threat from the sidebar to inspect dossier.</div>';
-      return;
-    }
-
-    const threat = this.analysis.threats.find(t => t.id === this.selectedThreatId);
+    if (!this.dossierContainer || !this.state.analysis) return;
+    const threats = this.state.analysis.threats || [];
+    const threat = threats[this.activeThreatIndex];
     if (!threat) return;
 
-    const simResult = simulateRefactoring(this.graph, this.selectedThreatId, this.activeStrategy);
+    const node = this.state.graph.getNode(threat.id);
+    const stat = this.state.analysis.nodeStats.get(threat.id);
+    const isEs = i18n.currentLang === 'es';
 
-    this.dossier.innerHTML = `
+    // Simulate current active strategy
+    const simResult = simulateRefactoring(this.state.graph, this.state.analysis, threat.id, this.activeStrategy);
+
+    this.dossierContainer.innerHTML = `
       <div class="threat-dossier-card">
         <div class="threat-header-row">
           <div>
-            <div class="threat-title-alias">${threat.alias}</div>
-            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Target Entity: ${threat.name}</div>
+            <div class="threat-title-alias">☠ ${threat.titleAlias}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${node?.path || threat.id}</div>
           </div>
-          <button id="threat-locate-btn" class="action-btn secondary" data-target-id="${threat.id}">LOCATE ON MAP</button>
+          <button id="locate-threat-btn" class="quest-track-btn" style="background:var(--accent-rose);color:#fff;">
+            ${i18n.t('threat_locate')}
+          </button>
         </div>
 
         <div class="threat-metrics-row">
           <div class="stat-box">
-            <span class="stat-lbl">STRUCTURAL RISK</span>
+            <span class="stat-lbl">${i18n.t('stat_risk')}</span>
             <span class="stat-val risk-high">${threat.riskScore}%</span>
           </div>
           <div class="stat-box">
-            <span class="stat-lbl">DIRECT DEPENDENTS</span>
-            <span class="stat-val">${threat.fanIn}</span>
+            <span class="stat-lbl">${i18n.t('inspect_centrality')}</span>
+            <span class="stat-val">${stat?.centralityPct || 90}%</span>
           </div>
           <div class="stat-box">
-            <span class="stat-lbl">CRITICAL PATHS</span>
-            <span class="stat-val">${threat.criticalPaths}</span>
+            <span class="stat-lbl">${i18n.t('inspect_dependents')}</span>
+            <span class="stat-val">${stat?.fanIn || 0}</span>
           </div>
           <div class="stat-box">
-            <span class="stat-lbl">CYCLOMATIC MASS</span>
-            <span class="stat-val">${threat.cyclomatic}</span>
+            <span class="stat-lbl">ANOMALIES</span>
+            <span class="stat-val" style="color:var(--accent-amber)">${stat?.isCyclic ? (isEs ? 'CICLO DETECTADO' : 'CYCLIC SCC') : 'NONE'}</span>
           </div>
         </div>
 
-        <div class="drawer-section">
-          <h3 class="section-title">THREAT DIAGNOSIS</h3>
-          <ul style="list-style: square; padding-left: 18px; color: var(--text-secondary); font-size: 11px;">
-            ${threat.reasons.map(r => `<li style="margin-bottom:4px;">${r}</li>`).join('')}
-          </ul>
+        <div class="diagnosis-box">
+          <strong>${i18n.t('threat_why')}:</strong><br>
+          ${isEs
+            ? `Este módulo actúa como un cuello de botella monolítico. ${stat?.fanIn} subsistemas dependen directamente de su estructura y concentra una masa crítica de dependencias.`
+            : `This module acts as a monolithic bottleneck. ${stat?.fanIn} subsystems directly depend on its concrete implementation, creating critical architectural drag.`}
         </div>
 
         <div class="refactor-strategies-box">
-          <h3 class="section-title">SIMULATE REFACTORING STRATEGY</h3>
+          <h4 style="font-size:11px;letter-spacing:0.08em;color:var(--text-muted)">${i18n.t('threat_simulate_heading')}</h4>
           <div class="strategy-options">
-            <button class="strategy-btn ${this.activeStrategy === 'break_cycle' ? 'active' : ''}" data-strategy="break_cycle">BREAK CYCLE</button>
-            <button class="strategy-btn ${this.activeStrategy === 'split_module' ? 'active' : ''}" data-strategy="split_module">SPLIT MODULE</button>
-            <button class="strategy-btn ${this.activeStrategy === 'introduce_interface' ? 'active' : ''}" data-strategy="introduce_interface">INTRODUCE INTERFACE</button>
-            <button class="strategy-btn ${this.activeStrategy === 'isolate' ? 'active' : ''}" data-strategy="isolate">ISOLATE SUBSYSTEM</button>
-          </div>
-          
-          <div style="font-size:11px; color:var(--accent-cyan); font-style:italic;">
-            ${simResult.strategyDescription}
+            <button class="strategy-btn ${this.activeStrategy === 'break_cycle' ? 'active' : ''}" data-strategy="break_cycle">${i18n.t('strat_break_cycle')}</button>
+            <button class="strategy-btn ${this.activeStrategy === 'split_module' ? 'active' : ''}" data-strategy="split_module">${i18n.t('strat_split_module')}</button>
+            <button class="strategy-btn ${this.activeStrategy === 'introduce_interface' ? 'active' : ''}" data-strategy="introduce_interface">${i18n.t('strat_introduce_interface')}</button>
+            <button class="strategy-btn ${this.activeStrategy === 'isolate' ? 'active' : ''}" data-strategy="isolate">${i18n.t('strat_isolate')}</button>
           </div>
 
           <div class="refactor-comparison-grid">
             <div>
-              <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px; letter-spacing:0.05em;">BEFORE SIMULATION</div>
-              <div style="font-size:12px; margin-bottom:4px;">Risk: <strong class="risk-high">${simResult.before.riskScore}%</strong></div>
-              <div style="font-size:12px; margin-bottom:4px;">Cycles: <strong>${simResult.before.cycleCount}</strong></div>
-              <div style="font-size:12px;">Blast Radius: <strong>${simResult.before.blastRadiusPct}%</strong></div>
+              <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;">${i18n.t('before_sim')}</div>
+              <div style="font-size:12px;color:#f87171;">${i18n.t('stat_risk')}: <strong>${threat.riskScore}%</strong></div>
+              <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${i18n.t('stat_blast_radius')}: <strong>${simResult.baselineBlastRadius}%</strong></div>
             </div>
             <div>
-              <div style="font-size:10px; color:var(--accent-emerald); margin-bottom:6px; letter-spacing:0.05em;">AFTER REFACTOR (HYPOTHETICAL)</div>
-              <div style="font-size:12px; margin-bottom:4px;">Risk: <strong class="risk-low">${simResult.after.riskScore}%</strong> (-${simResult.riskDelta}%)</div>
-              <div style="font-size:12px; margin-bottom:4px;">Cycles: <strong>${simResult.after.cycleCount}</strong></div>
-              <div style="font-size:12px;">Blast Radius: <strong style="color:var(--accent-cyan)">${simResult.after.blastRadiusPct}%</strong> (-${simResult.blastDelta}%)</div>
+              <div style="font-size:10px;color:var(--accent-emerald);margin-bottom:6px;">${i18n.t('after_sim')}</div>
+              <div style="font-size:12px;color:var(--accent-emerald);">${i18n.t('stat_risk')}: <strong>${simResult.newRiskScore}% (↓ -${simResult.riskReduction}%)</strong></div>
+              <div style="font-size:12px;color:var(--accent-emerald);margin-top:4px;">${i18n.t('stat_blast_radius')}: <strong>${simResult.newBlastRadius}% (↓ -${simResult.blastReduction}%)</strong></div>
             </div>
           </div>
 
-          <button id="commit-refactor-sim-btn" class="action-btn" style="align-self:flex-start; margin-top:8px;">
-            VALIDATE REFACTOR STRATEGY (+500 XP)
+          <button id="validate-refactor-btn" class="execute-sim-btn" style="background:var(--accent-emerald);box-shadow:0 0 20px rgba(16,185,129,0.35);">
+            ${i18n.t('btn_validate_refactor')}
           </button>
         </div>
       </div>
     `;
 
-    document.getElementById('threat-locate-btn')?.addEventListener('click', () => {
-      this.close();
+    // Locate Threat
+    document.getElementById('locate-threat-btn')?.addEventListener('click', () => {
+      sfx.playClick();
+      this.container?.classList.add('hidden');
+      document.getElementById('modal-backdrop')?.classList.add('hidden');
       this.state.setSelectedNode(threat.id);
-      const node = this.graph.getNode(threat.id);
-      if (node) {
-        this.world.camera.centerOn(node.x, node.y);
-      }
+      if (node) this.camera.centerOn(node.x, node.y, 3.5);
     });
 
-    this.dossier.querySelectorAll('.strategy-btn').forEach(btn => {
+    // Strategy Selection
+    this.dossierContainer.querySelectorAll('.strategy-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        sfx.playClick();
         this.activeStrategy = btn.getAttribute('data-strategy');
         this.renderDossier();
       });
     });
 
-    document.getElementById('commit-refactor-sim-btn')?.addEventListener('click', () => {
-      this.state.knowledgeTracker.markMastered(threat.id);
-      this.state.addXp(500);
-      alert(`REFACTOR STRATEGY VALIDATED!\nRisk reduced by ${simResult.riskDelta}%.\n+500 XP awarded to Architect Profile.`);
-      this.renderDossier();
+    // Validate Refactor Simulation
+    document.getElementById('validate-refactor-btn')?.addEventListener('click', () => {
+      sfx.playVictory();
+      this.state.knowledgeTracker.addXP(500);
+      alert(isEs
+        ? `¡REFACTOR VALIDADO! Estrategia '${this.activeStrategy}' simulada con éxito. Riesgo reducido en ${simResult.riskReduction}%. +500 XP ganados.`
+        : `REFACTOR VALIDATED! Simulated strategy '${this.activeStrategy}' successfully. Risk reduced by ${simResult.riskReduction}%. +500 XP awarded.`
+      );
     });
+  }
+
+  updateI18n() {
+    const title = document.getElementById('threats-header-title');
+    if (title) title.textContent = i18n.t('threat_title');
+
+    const stabilityLbl = document.getElementById('threats-lbl-stability');
+    if (stabilityLbl) stabilityLbl.textContent = i18n.t('threat_stability');
+
+    const sidebarHeading = document.getElementById('threats-sidebar-heading');
+    if (sidebarHeading) sidebarHeading.textContent = i18n.t('threat_detected_heading');
   }
 }
