@@ -17,6 +17,8 @@ import { QuestViewController } from './ui/questView.js';
 import { ThreatViewController } from './ui/threatView.js';
 import { WhatIfViewController } from './ui/whatIfView.js';
 import { TimelineViewController } from './ui/timelineView.js';
+import { TracePathModalController } from './ui/tracePathModal.js';
+import { ArchitecturalEventManager } from './game/architecturalEvents.js';
 import { HudController } from './ui/hud.js';
 import { TitleScreenController } from './ui/titleScreen.js';
 
@@ -26,6 +28,7 @@ class CodebaseUniverseApp {
     this.minimapCanvas = document.getElementById('minimap-canvas');
     this.world = null;
     this.manualModal = null;
+    this.eventManager = null;
     this.views = {};
     this.hud = null;
 
@@ -98,9 +101,19 @@ class CodebaseUniverseApp {
     this.views.threats = new ThreatViewController(globalState, this.world.camera);
     this.views.whatif = new WhatIfViewController(globalState, this.world.camera, this.world.effects);
     this.views.timeline = new TimelineViewController(globalState, this.world);
+    this.views.tracePath = new TracePathModalController(globalState, this.world.camera, this.world.pathFollower);
 
-    // 5. Initialize HUD Coordinator
+    // 5. Initialize Live Architectural Events Ticker
+    this.eventManager = new ArchitecturalEventManager(globalState, this.world.camera);
+    this.eventManager.startEventSimulation();
+
+    // 6. Initialize HUD Coordinator
     this.hud = new HudController(globalState, this.manualModal, this.world);
+
+    // Connect Trace Path Launcher Button
+    document.getElementById('btn-open-trace-path')?.addEventListener('click', () => {
+      this.views.tracePath.open();
+    });
 
     // Connect Camera Zoom Buttons
     document.getElementById('zoom-in-btn')?.addEventListener('click', () => {

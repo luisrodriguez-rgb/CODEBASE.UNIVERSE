@@ -1,8 +1,10 @@
 /**
- * Git Time Machine Architectural Evolution Player Controller for CODEBASE.UNIVERSE.
+ * Git Time Machine & Code Archaeology Controller for CODEBASE.UNIVERSE.
+ * ZERO EMOJIS.
  */
 
 import { generateGitEvolutionHistory } from '../analysis/history.js';
+import { analyzeArchaeology } from '../analysis/archaeology.js';
 import { sfx } from '../audio/soundFX.js';
 import { i18n } from '../i18n/translations.js';
 
@@ -28,7 +30,10 @@ export class TimelineViewController {
     this.healthEl = document.getElementById('tl-stat-health');
     this.noteEl = document.getElementById('tl-stat-note');
 
+    this.archaeologyContainer = document.getElementById('timeline-archaeology-box');
+
     this.timeline = [];
+    this.archaeologyData = null;
     this.currentIndex = 0;
     this.isPlaying = false;
     this.playbackInterval = null;
@@ -83,12 +88,14 @@ export class TimelineViewController {
     this.state.subscribe((event, data) => {
       if (event === 'graph_loaded') {
         this.timeline = generateGitEvolutionHistory(this.state.graph, this.state.analysis);
+        this.archaeologyData = analyzeArchaeology(this.state.graph, this.state.analysis);
         this.currentIndex = this.timeline.length - 1;
         if (this.slider) {
           this.slider.max = this.timeline.length - 1;
           this.slider.value = this.currentIndex;
         }
         this.renderCurrentCommit();
+        this.renderArchaeologyRelics();
       }
     });
   }
@@ -152,6 +159,40 @@ export class TimelineViewController {
     if (this.edgesEl) this.edgesEl.textContent = commit.edgeCount;
     if (this.healthEl) this.healthEl.textContent = `${commit.healthScore}%`;
     if (this.noteEl) this.noteEl.textContent = commit.message;
+  }
+
+  renderArchaeologyRelics() {
+    if (!this.archaeologyContainer || !this.archaeologyData) return;
+    const isEs = i18n.currentLang === 'es';
+    const relics = this.archaeologyData.relics.slice(0, 10);
+
+    this.archaeologyContainer.innerHTML = `
+      <div style="font-size:10px;font-weight:700;color:var(--accent-cyan);letter-spacing:0.05em;margin-bottom:6px;">
+        [+] ${isEs ? 'ARQUEOLOGÍA DE CÓDIGO // RELIQUIAS Y FÓSILES' : 'CODE ARCHAEOLOGY // HISTORIC RELICS'}
+      </div>
+      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;">
+        ${relics.map(r => `
+          <div class="relic-card-chip" data-node-id="${r.id}" style="background:rgba(15,23,42,0.8);border:1px solid rgba(56,189,248,0.25);padding:4px 8px;border-radius:3px;font-size:9.5px;cursor:pointer;white-space:nowrap;">
+            <span style="color:var(--accent-amber);font-weight:700;">${r.relicBadge}</span>
+            <span style="color:#fff;margin-left:4px;">${r.name}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    this.archaeologyContainer.querySelectorAll('.relic-card-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        sfx.playClick();
+        const nId = chip.getAttribute('data-node-id');
+        if (nId) {
+          this.state.setSelectedNode(nId);
+          const node = this.state.graph.getNode(nId);
+          if (node) {
+            this.graphWorld.camera.centerOn(node.x, node.y, 3.5);
+          }
+        }
+      });
+    });
   }
 
   updateI18n() {

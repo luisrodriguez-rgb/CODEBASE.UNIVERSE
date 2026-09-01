@@ -87,6 +87,7 @@
             <button id="zoom-in-btn" class="cam-btn" title="Zoom In">+</button>
             <button id="zoom-out-btn" class="cam-btn" title="Zoom Out">-</button>
             <button id="zoom-reset-btn" class="cam-btn" title="Reset View">RESET</button>
+            <button id="btn-open-trace-path" class="cam-btn" style="background:rgba(56,189,248,0.15);color:var(--accent-cyan);border-color:rgba(56,189,248,0.4);font-weight:700;" title="Trace shortest path between two modules">[>] TRACE PATH</button>
           </div>
         </div>
 
@@ -300,8 +301,35 @@
       </div>
     </section>
 
+    <!-- Trace Path GPS Modal -->
+    <section id="trace-path-modal" class="deck-modal hidden" style="max-width:720px;height:auto;max-height:560px;">
+      <div class="modal-header">
+        <h2 id="trace-path-header-title">TRACE EXECUTION PATH // ARCHITECTURAL GPS</h2>
+        <button id="close-trace-btn" class="modal-close-btn" data-close="trace-path-modal">[X]</button>
+      </div>
+      <div style="padding:24px;display:flex;flex-direction:column;gap:16px;">
+        <p style="font-size:11.5px;color:var(--text-secondary);margin:0;line-height:1.4;">
+          Select an Origin module and a Destination module. The engine calculates the shortest dependency route via Dijkstra graph traversal.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="field-group">
+            <label style="font-size:10px;font-weight:700;color:var(--accent-cyan);letter-spacing:0.05em;">ORIGIN (START MODULE)</label>
+            <select id="trace-start-node" class="styled-select"></select>
+          </div>
+          <div class="field-group">
+            <label style="font-size:10px;font-weight:700;color:var(--accent-amber);letter-spacing:0.05em;">DESTINATION (TARGET MODULE)</label>
+            <select id="trace-end-node" class="styled-select"></select>
+          </div>
+        </div>
+        <button id="btn-execute-trace" class="execute-sim-btn" style="background:var(--accent-cyan);color:#050811;">
+          [>] CALCULATE SHORTEST PATH
+        </button>
+        <div id="trace-results-box" style="margin-top:8px;"></div>
+      </div>
+    </section>
+
     <!-- Time Machine Drawer / Timeline Bar -->
-    <div id="timeline-drawer" class="timeline-bar-dock hidden">
+    <div id="timeline-drawer" class="timeline-bar-dock hidden" style="height:auto;min-height:165px;">
       <div class="timeline-header">
         <div class="timeline-meta">
           <span id="timeline-header-title" class="timeline-title">GIT TIME MACHINE // ARCHITECTURAL EVOLUTION</span>
@@ -309,16 +337,16 @@
           <span id="current-commit-date" class="commit-date">2026-08-30</span>
         </div>
         <div class="timeline-playback-controls">
-          <button id="timeline-prev-btn" class="t-btn">◄ PREV</button>
-          <button id="timeline-play-btn" class="t-btn highlight">▶ PLAY</button>
-          <button id="timeline-next-btn" class="t-btn">NEXT ►</button>
+          <button id="timeline-prev-btn" class="t-btn">[<] PREV</button>
+          <button id="timeline-play-btn" class="t-btn highlight">[>] PLAY</button>
+          <button id="timeline-next-btn" class="t-btn">NEXT [>]</button>
           <select id="timeline-speed-select" class="speed-select">
             <option value="1">1x SPEED</option>
             <option value="2">2x SPEED</option>
             <option value="4">4x SPEED</option>
           </select>
         </div>
-        <button id="close-timeline-btn" class="close-btn">✕</button>
+        <button id="close-timeline-btn" class="close-btn">[X]</button>
       </div>
       <div class="timeline-slider-track">
         <input type="range" id="timeline-slider" min="0" max="100" value="100" step="1">
@@ -331,6 +359,7 @@
         <div class="tl-stat"><span id="tl-lbl-health">ARCHITECTURAL HEALTH:</span> <span id="tl-stat-health">62%</span></div>
         <div class="tl-stat note" id="tl-stat-note">Subsystem AI Engine incorporated</div>
       </div>
+      <div id="timeline-archaeology-box" style="margin-top:10px;border-top:1px solid rgba(30,41,59,0.5);padding-top:8px;"></div>
     </div>
 
     <!-- Architect's Manual Modal (Dedicated 8-Tab Deck) -->

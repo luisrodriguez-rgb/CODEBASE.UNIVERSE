@@ -1,5 +1,6 @@
 /**
- * Quests Deck & Detective Incident Room Controller for CODEBASE.UNIVERSE.
+ * Quests Deck & Detective Incident Room with Educational Lessons for CODEBASE.UNIVERSE.
+ * ZERO EMOJIS.
  */
 
 import { sfx } from '../audio/soundFX.js';
@@ -126,26 +127,40 @@ export class QuestViewController {
       const reward = c.rewardXp || c.rewardXP || 800;
 
       return `
-        <div class="quest-card ${c.solved ? 'completed' : ''}" data-case-id="${c.id}">
-          <div class="quest-info" style="max-width:68%">
-            <div class="quest-title" style="color:var(--accent-rose)">${c.solved ? '[SOLVED] ' : '[INCIDENT] '}${code} // ${title}</div>
-            <div class="quest-desc">${desc}</div>
-            <div style="margin-top:8px;font-size:10.5px;color:var(--text-muted);display:flex;flex-direction:column;gap:3px;">
-              ${clues.map(clue => `<span>- ${clue}</span>`).join('')}
+        <div class="quest-card ${c.solved ? 'completed' : ''}" data-case-id="${c.id}" style="flex-direction:column;align-items:stretch;gap:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div class="quest-info" style="max-width:70%">
+              <div class="quest-title" style="color:var(--accent-rose)">${c.solved ? '[SOLVED] ' : '[INCIDENT] '}${code} // ${title}</div>
+              <div class="quest-desc">${desc}</div>
+              <div style="margin-top:8px;font-size:10.5px;color:var(--text-muted);display:flex;flex-direction:column;gap:3px;">
+                ${clues.map(clue => `<span>- ${clue}</span>`).join('')}
+              </div>
             </div>
-            <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+            <div class="quest-action-col">
+              <span class="quest-reward">+${reward} XP</span>
+              <span class="badge ${c.solved ? 'highlight' : 'threat-badge'}">${c.solved ? 'RESOLVED' : 'ACTIVE'}</span>
+            </div>
+          </div>
+
+          ${!c.solved ? `
+            <div style="display:flex;gap:8px;align-items:center;border-top:1px solid rgba(30,41,59,0.5);padding-top:10px;">
               <span style="font-size:10px;font-weight:700;color:var(--text-muted)">SUSPECTS:</span>
               ${c.suspects.map(s => `
-                <button class="suspect-btn" data-case-id="${c.id}" data-suspect-id="${s.id}" style="background:rgba(23,32,51,0.8);border:1px solid var(--border-subtle);color:#fff;font-size:10px;padding:4px 8px;border-radius:3px;cursor:pointer;">
+                <button class="suspect-btn" data-case-id="${c.id}" data-suspect-id="${s.id}" style="background:rgba(23,32,51,0.8);border:1px solid var(--border-subtle);color:#fff;font-size:10px;padding:5px 9px;border-radius:3px;cursor:pointer;">
                   [?] ${s.name}
                 </button>
               `).join('')}
             </div>
-          </div>
-          <div class="quest-action-col">
-            <span class="quest-reward">+${reward} XP</span>
-            <span class="badge ${c.solved ? 'highlight' : 'threat-badge'}">${c.solved ? 'RESOLVED' : 'ACTIVE'}</span>
-          </div>
+          ` : `
+            <div class="architectural-lesson-box" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);padding:12px 14px;border-radius:4px;font-size:11px;color:#d1fae5;">
+              <div style="font-weight:700;color:var(--accent-emerald);margin-bottom:4px;letter-spacing:0.05em;">
+                [+] ${isEs ? 'LECCIÓN ARQUITECTÓNICA // CASO RESUELTO' : 'ARCHITECTURAL LESSON // CASE DEBRIEF'}
+              </div>
+              <p style="margin:0;line-height:1.45;color:var(--text-secondary);">
+                ${this.getArchitecturalLessonText(c.culpritId, isEs)}
+              </p>
+            </div>
+          `}
         </div>
       `;
     }).join('');
@@ -162,21 +177,24 @@ export class QuestViewController {
             incidentCase.solved = true;
             sfx.playVictory();
             this.state.knowledgeTracker.addXP(incidentCase.rewardXp);
-            alert(isEs
-              ? `CASO RESUELTO: Identificaste correctamente el modulo causante del fallo (${suspectId}). Recompensa: +${incidentCase.rewardXp} XP.`
-              : `CASE RESOLVED: You correctly identified the root cause module (${suspectId}). Reward: +${incidentCase.rewardXp} XP.`
-            );
             this.renderDetectiveCases();
           } else {
             sfx.playAlarm();
             alert(isEs
-              ? `PISTA ERRONEA: El modulo ${suspectId} tiene dependencias sanas y no es el origen del incidente. Revisa las pistas de centralidad y riesgo.`
+              ? `PISTA ERRÓNEA: El módulo ${suspectId} tiene dependencias sanas y no es el origen del incidente. Revisa las pistas de centralidad y riesgo.`
               : `FALSE LEAD: Module ${suspectId} has healthy topology and is not the culprit. Check the risk and centrality clues.`
             );
           }
         }
       });
     });
+  }
+
+  getArchitecturalLessonText(culpritId, isEs) {
+    if (isEs) {
+      return `El módulo '${culpritId}' actuaba como un 'God Object' centralizando dependencias directas en lugar de interactuar a través de interfaces invertidas (Principio DIP). Solución recomendada: Introducir un bus de eventos o adaptadores abstractos.`;
+    }
+    return `Module '${culpritId}' behaved as a monolithic God Object, creating structural drag. Applying the Dependency Inversion Principle (DIP) and extracting specialized worker sub-services isolates blast radius.`;
   }
 
   updateI18n() {
