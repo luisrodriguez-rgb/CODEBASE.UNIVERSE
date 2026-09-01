@@ -315,27 +315,77 @@ export class GraphWorld {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Tactical Sector Label Pill with entity count
+      // Calculate sector metrics: connections and avg risk
+      let sectorEdges = 0;
+      let sectorRiskSum = 0;
+      if (this.graph && this.analysis) {
+        for (const node of this.graph.nodes.values()) {
+          if ((node.biome || 'core') === sector.id) {
+            sectorEdges += (this.graph.getDependencies(node.id).length + this.graph.getDependents(node.id).length);
+            const st = this.analysis.nodeStats.get(node.id);
+            if (st) sectorRiskSum += st.riskScore;
+          }
+        }
+      }
+      const avgSectorRisk = nodeCount > 0 ? Math.round(sectorRiskSum / nodeCount) : 0;
+
+      // Tactical Holographic Multi-Line Biome Card (Matching Concept Art)
       const rawName = i18n.t(`biome_${sector.id}`) || sector.name;
-      const localizedName = nodeCount > 0 && sector.id !== 'core' ? `${rawName} [${nodeCount}]` : rawName;
+      const subtitle = i18n.t(`biome_${sector.id}_desc`) || sector.desc;
+      const isEs = i18n.currentLang === 'es';
+      
+      const metricsText = sector.id === 'hazard' 
+        ? `${isEs ? 'Riesgo Crítico' : 'High Risk'}: ${avgSectorRisk}%`
+        : `${nodeCount} ${isEs ? 'entidades' : 'entities'} · ${sectorEdges} ${isEs ? 'conexiones' : 'links'}`;
+
       ctx.save();
-      ctx.translate(sector.x, sector.y - sector.radius - 24);
-      
-      ctx.font = '700 11px JetBrains Mono';
-      const textWidth = ctx.measureText(localizedName).width;
-      
-      ctx.fillStyle = 'rgba(7, 11, 20, 0.95)';
-      ctx.strokeStyle = `${conf.color}80`;
-      ctx.lineWidth = 1.2;
+      ctx.translate(sector.x, sector.y - sector.radius - 36);
+
+      const cardW = 210;
+      const cardH = 54;
+      const x0 = -cardW / 2;
+      const y0 = -cardH / 2;
+
+      // Card Background Glass with Cyber Chamfered Corners
+      ctx.fillStyle = 'rgba(7, 11, 20, 0.92)';
+      ctx.strokeStyle = `${conf.color}99`;
+      ctx.lineWidth = 1.4;
+      ctx.shadowColor = conf.color;
+      ctx.shadowBlur = 10;
+
       ctx.beginPath();
-      ctx.roundRect(-textWidth / 2 - 12, -10, textWidth + 24, 20, 4);
+      const ch = 8; // Chamfer cut
+      ctx.moveTo(x0 + ch, y0);
+      ctx.lineTo(x0 + cardW - ch, y0);
+      ctx.lineTo(x0 + cardW, y0 + ch);
+      ctx.lineTo(x0 + cardW, y0 + cardH - ch);
+      ctx.lineTo(x0 + cardW - ch, y0 + cardH);
+      ctx.lineTo(x0 + ch, y0 + cardH);
+      ctx.lineTo(x0, y0 + cardH - ch);
+      ctx.lineTo(x0, y0 + ch);
+      ctx.closePath();
       ctx.fill();
       ctx.stroke();
 
+      ctx.shadowBlur = 0; // Reset shadow
+
+      // Top Header: Category Tag & Sector Title
+      ctx.font = '800 11px JetBrains Mono';
       ctx.fillStyle = conf.color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(localizedName, 0, 0);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`[ ${rawName.toUpperCase()} ]`, x0 + 12, y0 + 8);
+
+      // Middle Line: Subtitle / Domain Role
+      ctx.font = '500 9.5px Inter, sans-serif';
+      ctx.fillStyle = 'rgba(226, 232, 240, 0.75)';
+      ctx.fillText(subtitle.length > 34 ? subtitle.substring(0, 32) + '...' : subtitle, x0 + 12, y0 + 22);
+
+      // Bottom Line: Live Telemetry Metrics
+      ctx.font = '700 9.5px JetBrains Mono';
+      ctx.fillStyle = sector.id === 'hazard' ? '#f43f5e' : 'rgba(56, 189, 248, 0.9)';
+      ctx.fillText(metricsText, x0 + 12, y0 + 36);
+
       ctx.restore();
     }
     ctx.restore();

@@ -127,79 +127,180 @@
       </div>
     </footer>
 
-    <!-- Side Inspection Panel (Sliding Drawer) -->
+    <!-- Next-Gen Cyberpunk Entity Inspector (Matching Concept Art Image 3) -->
     <aside id="inspector-panel" class="inspector-drawer hidden">
+      <!-- Window Control & Header -->
       <div class="drawer-header">
-        <div class="drawer-title-group">
-          <span id="inspect-rarity-tag" class="rarity-tag rarity-legendary">LEGENDARY</span>
-          <span id="inspect-biome-tag" class="biome-tag">CORE CITADEL</span>
+        <div class="inspector-top-meta">
+          <div class="cube-holo-preview" id="inspect-holo-box">
+            <div class="holo-cube-wireframe"></div>
+          </div>
+          <div class="inspector-identity">
+            <h2 id="inspect-entity-name" class="entity-headline-title">renderer.ts</h2>
+            <div id="inspect-entity-path" class="entity-subpath">src/engine/renderer.ts</div>
+            <div class="badge-tag-strip">
+              <span id="inspect-rarity-tag" class="rarity-tag rarity-legendary">LEGENDARY</span>
+              <span id="inspect-biome-tag" class="biome-tag">CORE CITADEL</span>
+            </div>
+          </div>
         </div>
-        <button id="close-inspector-btn" class="close-btn">✕</button>
+        <div class="inspector-window-controls">
+          <button id="minimize-inspector-btn" class="win-ctrl-btn" title="Minimize">[-]</button>
+          <button id="close-inspector-btn" class="win-ctrl-btn close-btn" title="Close">[X]</button>
+        </div>
       </div>
+
+      <!-- Navigation Tabs -->
+      <div class="inspector-tabs-nav">
+        <button class="inspect-tab-btn active" data-tab="overview">Overview</button>
+        <button class="inspect-tab-btn" data-tab="dependencies">Dependencies</button>
+        <button class="inspect-tab-btn" data-tab="calls">Calls</button>
+        <button class="inspect-tab-btn" data-tab="history">History</button>
+      </div>
+
+      <!-- Drawer Content Scrollable -->
       <div class="drawer-content">
-        <div class="entity-headline">
-          <h2 id="inspect-entity-name">renderer.ts</h2>
-          <div id="inspect-entity-path" class="entity-path">src/engine/renderer.ts</div>
+        <!-- TAB 1: OVERVIEW -->
+        <div id="tab-pane-overview" class="inspector-tab-pane active">
+          <!-- Section 1: METRICS -->
+          <div class="inspect-section-block">
+            <div class="section-title-tag">METRICS</div>
+            
+            <div class="cyber-metrics-grid">
+              <!-- Centrality Circular Gauge -->
+              <div class="metric-card gauge-card">
+                <div class="gauge-ring-wrap">
+                  <svg class="circular-chart" viewBox="0 0 36 36">
+                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path id="inspect-centrality-circle" class="circle-fill" stroke-dasharray="94, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  </svg>
+                  <div class="gauge-center-val">
+                    <span id="inspect-centrality-val">94%</span>
+                  </div>
+                </div>
+                <div class="metric-card-lbl">CENTRALITY</div>
+              </div>
+
+              <!-- Dependents / Fan-In -->
+              <div class="metric-card">
+                <div class="metric-card-lbl">DEPENDENTS</div>
+                <div id="inspect-dependents-count" class="metric-card-val cyan-text">41</div>
+              </div>
+
+              <!-- Calls / Fan-Out -->
+              <div class="metric-card">
+                <div class="metric-card-lbl">CALLS</div>
+                <div id="inspect-dependencies-count" class="metric-card-val blue-text">1,284</div>
+              </div>
+
+              <!-- LOC -->
+              <div class="metric-card">
+                <div class="metric-card-lbl">LOC</div>
+                <div id="inspect-loc-val" class="metric-card-val">1,842</div>
+              </div>
+
+              <!-- File Size -->
+              <div class="metric-card">
+                <div class="metric-card-lbl">SIZE</div>
+                <div id="inspect-filesize-val" class="metric-card-val">14.8 KB</div>
+              </div>
+
+              <!-- Cyclomatic Complexity -->
+              <div class="metric-card">
+                <div class="metric-card-lbl">COMPLEXITY</div>
+                <div class="complexity-stat-row">
+                  <span id="inspect-complexity-text" class="risk-pill-text">HIGH</span>
+                  <div id="inspect-complexity-bars" class="mini-bar-indicator">
+                    <span class="bar active red"></span>
+                    <span class="bar active red"></span>
+                    <span class="bar active red"></span>
+                    <span class="bar inactive"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: ARCHITECTURAL ROLE -->
+          <div class="inspect-section-block">
+            <div class="section-title-tag">ARCHITECTURAL ROLE</div>
+            <p id="inspect-diagnosis-text" class="role-desc-text">
+              Nucleo principal de ejecucion y renderizado. Controla la pipeline de dibujo, proyeccion 2.5D y gestion de capas.
+            </p>
+            <div id="inspect-tag-cloud" class="cyber-tag-cloud">
+              <span class="cyber-hashtag">#core</span>
+              <span class="cyber-hashtag">#engine</span>
+              <span class="cyber-hashtag">#render</span>
+              <span class="cyber-hashtag critical">#critical</span>
+            </div>
+          </div>
+
+          <!-- Section 3: RISK ANALYSIS & WHY? -->
+          <div class="inspect-section-block">
+            <div class="section-title-tag">RISK ANALYSIS</div>
+            <div class="risk-score-strip">
+              <span class="risk-score-label">RISK SCORE:</span>
+              <span id="inspect-risk-val" class="risk-score-val">87%</span>
+              <span id="inspect-risk-severity" class="severity-tag critical">[ CRÍTICO ]</span>
+            </div>
+            <div class="segmented-risk-bar">
+              <div id="inspect-risk-fill" class="risk-segments-fill" style="width: 87%;"></div>
+            </div>
+            
+            <div class="why-causes-box">
+              <div class="why-title">Why?</div>
+              <ul id="inspect-why-list" class="why-points-list">
+                <li>41 modulos dependientes (Punto critico de falla)</li>
+                <li>3 rutas circulares detectadas (SCC Wormhole)</li>
+                <li>Complejidad ciclomática superior al percentil 90</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Section 4: QUICK ACTIONS -->
+          <div class="inspect-section-block">
+            <div class="section-title-tag">QUICK ACTIONS</div>
+            <div class="quick-action-grid">
+              <button id="btn-quick-trace-path" class="quick-cyber-btn">
+                <span class="btn-icon">[>]</span> Explore Path
+              </button>
+              <button id="btn-quick-whatif-sim" class="quick-cyber-btn highlight-danger">
+                <span class="btn-icon">[*]</span> What-If Sim
+              </button>
+              <button id="btn-quick-refactor-arena" class="quick-cyber-btn">
+                <span class="btn-icon">[#]</span> Refactor Arena
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div class="stat-grid">
-          <div class="stat-box">
-            <span id="inspect-lbl-centrality" class="stat-lbl">CENTRALITY</span>
-            <span id="inspect-centrality" class="stat-val">96.4%</span>
-          </div>
-          <div class="stat-box">
-            <span id="inspect-lbl-importance" class="stat-lbl">IMPORTANCE</span>
-            <span id="inspect-importance" class="stat-val">0.94</span>
-          </div>
-          <div class="stat-box">
-            <span id="inspect-lbl-risk" class="stat-lbl">STRUCTURAL RISK</span>
-            <span id="inspect-risk" class="stat-val risk-high">89%</span>
-          </div>
-          <div class="stat-box">
-            <span id="inspect-lbl-complexity" class="stat-lbl">CYCLOMATIC MASS</span>
-            <span id="inspect-complexity" class="stat-val">HIGH (42)</span>
-          </div>
-          <div class="stat-box">
-            <span id="inspect-lbl-dependents" class="stat-lbl">DEPENDENTS (FAN-IN)</span>
-            <span id="inspect-dependents-count" class="stat-val">37</span>
-          </div>
-          <div class="stat-box">
-            <span id="inspect-lbl-dependencies" class="stat-lbl">DEPENDENCIES (FAN-OUT)</span>
-            <span id="inspect-dependencies-count" class="stat-val">12</span>
+        <!-- TAB 2: DEPENDENCIES -->
+        <div id="tab-pane-dependencies" class="inspector-tab-pane">
+          <div class="inspect-section-block">
+            <div class="section-title-tag">DIRECT CALLERS / INBOUND (<span id="inspect-callers-tab-count">0</span>)</div>
+            <ul id="inspect-callers-list" class="entity-link-list"></ul>
           </div>
         </div>
 
-        <div class="drawer-section">
-          <h3 id="inspect-lbl-knowledge" class="section-title">KNOWLEDGE STATE</h3>
-          <div class="knowledge-pills">
-            <span id="tag-discovered" class="k-tag active">DISCOVERED ✓</span>
-            <span id="tag-understood" class="k-tag">UNDERSTOOD ✗</span>
-            <span id="tag-mastered" class="k-tag">MASTERED ✗</span>
+        <!-- TAB 3: CALLS -->
+        <div id="tab-pane-calls" class="inspector-tab-pane">
+          <div class="inspect-section-block">
+            <div class="section-title-tag">OUTGOING DEPENDENCIES (<span id="inspect-deps-tab-count">0</span>)</div>
+            <ul id="inspect-deps-list" class="entity-link-list"></ul>
           </div>
         </div>
 
-        <div class="drawer-section">
-          <h3 class="section-title">WHAT-IF SIMULATION QUICK TRIGGER</h3>
-          <div class="action-buttons-group">
-            <button id="quick-simulate-failure-btn" class="sim-action-btn danger">SIMULATE FAILURE</button>
-            <button id="quick-simulate-change-btn" class="sim-action-btn warning">SIMULATE CONTRACT CHANGE</button>
-          </div>
-        </div>
-
-        <div class="drawer-section">
-          <h3 class="section-title"><span id="inspect-lbl-callers">DIRECT CALLERS / DEPENDENTS</span> (<span id="inspect-callers-count">37</span>)</h3>
-          <ul id="inspect-callers-list" class="entity-link-list"></ul>
-        </div>
-
-        <div class="drawer-section">
-          <h3 class="section-title"><span id="inspect-lbl-deps">OUTGOING DEPENDENCIES</span> (<span id="inspect-deps-count">12</span>)</h3>
-          <ul id="inspect-deps-list" class="entity-link-list"></ul>
-        </div>
-
-        <div class="drawer-section">
-          <h3 id="inspect-lbl-diagnosis" class="section-title">ARCHITECTURAL DIAGNOSIS</h3>
-          <div id="inspect-diagnosis-text" class="diagnosis-box">
-            Critical dependency bottleneck. 37 modules rely directly on this entity.
+        <!-- TAB 4: HISTORY -->
+        <div id="tab-pane-history" class="inspector-tab-pane">
+          <div class="inspect-section-block">
+            <div class="section-title-tag">GIT REVISION AUDIT</div>
+            <div id="inspect-history-log" class="history-log-box">
+              <div class="history-item">
+                <span class="commit-dot"></span>
+                <span class="commit-msg">Feat: Enhance procedural building window shaders</span>
+                <span class="commit-author">luisrodriguez · 2 hours ago</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -328,38 +429,76 @@
       </div>
     </section>
 
-    <!-- Time Machine Drawer / Timeline Bar -->
-    <div id="timeline-drawer" class="timeline-bar-dock hidden" style="height:auto;min-height:165px;">
-      <div class="timeline-header">
-        <div class="timeline-meta">
-          <span id="timeline-header-title" class="timeline-title">GIT TIME MACHINE // ARCHITECTURAL EVOLUTION</span>
-          <span id="current-commit-hash" class="commit-hash">COMMIT: 8F31A9 (HEAD)</span>
-          <span id="current-commit-date" class="commit-date">2026-08-30</span>
+    <!-- Next-Gen Git Time Machine Mini-Deck (Matching Concept Art Image 4) -->
+    <div id="timeline-drawer" class="timeline-bar-dock hidden">
+      <div class="tm-cyber-card">
+        <!-- Header -->
+        <div class="tm-card-header">
+          <div class="tm-title-strip">
+            <span class="tm-status-dot"></span>
+            <span id="timeline-header-title" class="tm-title-text">TIME MACHINE // GIT</span>
+          </div>
+          <button id="close-timeline-btn" class="win-ctrl-btn close-btn" title="Close">[X]</button>
         </div>
-        <div class="timeline-playback-controls">
-          <button id="timeline-prev-btn" class="t-btn">[<] PREV</button>
-          <button id="timeline-play-btn" class="t-btn highlight">[>] PLAY</button>
-          <button id="timeline-next-btn" class="t-btn">NEXT [>]</button>
-          <select id="timeline-speed-select" class="speed-select">
-            <option value="1">1x SPEED</option>
-            <option value="2">2x SPEED</option>
-            <option value="4">4x SPEED</option>
-          </select>
+
+        <!-- Years Axis & Sparkline Graph -->
+        <div class="tm-graph-section">
+          <div class="tm-years-axis">
+            <span>2023</span>
+            <span>2024</span>
+            <span>2025</span>
+            <span class="active-year">2026</span>
+          </div>
+          
+          <div class="tm-sparkline-wrap">
+            <svg id="timeline-sparkline-svg" class="tm-sparkline-svg" viewBox="0 0 400 65" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="tm-spark-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45"/>
+                  <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.0"/>
+                </linearGradient>
+              </defs>
+              <path id="tm-spark-area" class="spark-area" d="M 0 50 Q 80 40, 160 30 T 320 20 L 400 12 L 400 65 L 0 65 Z" fill="url(#tm-spark-grad)"/>
+              <path id="tm-spark-line" class="spark-line" d="M 0 50 Q 80 40, 160 30 T 320 20 L 400 12" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+            </svg>
+            
+            <!-- Scrubber line & active commit tag -->
+            <div id="tm-scrubber-marker" class="tm-scrubber-marker" style="left: 75%;">
+              <div class="scrubber-label" id="current-commit-hash">Commit 8F31A</div>
+              <div class="scrubber-line"></div>
+              <div class="scrubber-pin"></div>
+            </div>
+
+            <input type="range" id="timeline-slider" class="tm-invisible-slider" min="0" max="100" value="75" step="1">
+          </div>
         </div>
-        <button id="close-timeline-btn" class="close-btn">[X]</button>
+
+        <!-- Controls & Delta Stats Footer -->
+        <div class="tm-footer-grid">
+          <!-- Playback Controls -->
+          <div class="tm-playback-cluster">
+            <button id="timeline-play-btn" class="tm-play-btn" title="Play / Pause">
+              <span id="tm-play-icon">▶</span>
+            </button>
+            <button id="timeline-prev-btn" class="tm-step-btn" title="Previous Commit">|<</button>
+            <button id="timeline-speed-btn" class="tm-speed-btn" title="Playback Speed">1.0x</button>
+            <button id="timeline-next-btn" class="tm-step-btn" title="Next Commit">>></button>
+          </div>
+
+          <!-- Commit Delta Telemetry -->
+          <div class="tm-delta-telemetry">
+            <div class="delta-stat-row">
+              <span class="delta-item positive" id="tm-delta-modules">+17 módulos</span>
+              <span class="delta-item positive" id="tm-delta-funcs">+42 funciones</span>
+              <span class="delta-item positive" id="tm-delta-links">+81 conexiones</span>
+            </div>
+            <div class="shift-stat-row" id="tl-stat-note">
+              <span class="shift-label">Architecture Shift:</span>
+              <span class="shift-path" id="tm-shift-path">UI -> CORE -> ENGINE</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="timeline-slider-track">
-        <input type="range" id="timeline-slider" min="0" max="100" value="100" step="1">
-        <div id="timeline-milestones" class="timeline-milestones"></div>
-      </div>
-      <div class="timeline-summary-strip">
-        <div class="tl-stat"><span id="tl-lbl-evolution">EVOLUTION:</span> <span id="tl-stat-gen">GEN 12 / 12</span></div>
-        <div class="tl-stat"><span id="tl-lbl-entities">ENTITIES AT COMMIT:</span> <span id="tl-stat-nodes">568</span></div>
-        <div class="tl-stat"><span id="tl-lbl-connections">CONNECTIONS:</span> <span id="tl-stat-edges">1,520</span></div>
-        <div class="tl-stat"><span id="tl-lbl-health">ARCHITECTURAL HEALTH:</span> <span id="tl-stat-health">62%</span></div>
-        <div class="tl-stat note" id="tl-stat-note">Subsystem AI Engine incorporated</div>
-      </div>
-      <div id="timeline-archaeology-box" style="margin-top:10px;border-top:1px solid rgba(30,41,59,0.5);padding-top:8px;"></div>
     </div>
 
     <!-- GitHub Cloud Repository Importer Modal -->
