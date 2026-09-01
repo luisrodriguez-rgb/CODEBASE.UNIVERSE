@@ -339,22 +339,35 @@ export class GraphWorld {
         : `${nodeCount} ${isEs ? 'entidades' : 'entities'} · ${sectorEdges} ${isEs ? 'conexiones' : 'links'}`;
 
       ctx.save();
-      ctx.translate(sector.x, sector.y - sector.radius - 36);
+      ctx.translate(sector.x, sector.y - sector.radius - 42);
 
-      const cardW = 210;
-      const cardH = 54;
+      // Measure exact text widths to dynamically size the card (No text cutoff or overflow!)
+      ctx.font = '800 11px JetBrains Mono';
+      const titleW = ctx.measureText(`[ ${rawName.toUpperCase()} ]`).width;
+      ctx.font = '500 9.5px Inter, sans-serif';
+      const subW = ctx.measureText(subtitle).width;
+      ctx.font = '700 9.5px JetBrains Mono';
+      const metW = ctx.measureText(metricsText).width;
+
+      const cardW = Math.max(240, Math.max(titleW, Math.max(subW, metW)) + 38);
+      const cardH = 58;
       const x0 = -cardW / 2;
       const y0 = -cardH / 2;
 
-      // Card Background Glass with Cyber Chamfered Corners
-      ctx.fillStyle = 'rgba(7, 11, 20, 0.92)';
-      ctx.strokeStyle = `${conf.color}99`;
-      ctx.lineWidth = 1.4;
+      // Outer Glow & Shadow
       ctx.shadowColor = conf.color;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 16;
+
+      // Card Background Glass with Cyber Chamfered Corners
+      const grad = ctx.createLinearGradient(x0, y0, x0 + cardW, y0 + cardH);
+      grad.addColorStop(0, 'rgba(6, 11, 22, 0.96)');
+      grad.addColorStop(1, 'rgba(12, 20, 36, 0.96)');
+      ctx.fillStyle = grad;
+      ctx.strokeStyle = `${conf.color}bb`;
+      ctx.lineWidth = 1.5;
 
       ctx.beginPath();
-      const ch = 8; // Chamfer cut
+      const ch = 9; // Chamfer cut
       ctx.moveTo(x0 + ch, y0);
       ctx.lineTo(x0 + cardW - ch, y0);
       ctx.lineTo(x0 + cardW, y0 + ch);
@@ -367,24 +380,58 @@ export class GraphWorld {
       ctx.fill();
       ctx.stroke();
 
-      ctx.shadowBlur = 0; // Reset shadow
+      // Cyber Corner Brackets (HUD Reticle styling)
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.8;
+      const bLen = 5;
+      // Top-Left bracket
+      ctx.beginPath();
+      ctx.moveTo(x0, y0 + ch + bLen);
+      ctx.lineTo(x0, y0 + ch);
+      ctx.lineTo(x0 + ch, y0);
+      ctx.lineTo(x0 + ch + bLen, y0);
+      ctx.stroke();
+
+      // Top-Right bracket
+      ctx.beginPath();
+      ctx.moveTo(x0 + cardW - ch - bLen, y0);
+      ctx.lineTo(x0 + cardW - ch, y0);
+      ctx.lineTo(x0 + cardW, y0 + ch);
+      ctx.lineTo(x0 + cardW, y0 + ch + bLen);
+      ctx.stroke();
+
+      ctx.shadowBlur = 0; // Reset shadow for crisp text rendering
+
+      // Top LED Indicator Dot
+      ctx.fillStyle = conf.color;
+      ctx.beginPath();
+      ctx.arc(x0 + 15, y0 + 13, 3, 0, Math.PI * 2);
+      ctx.fill();
 
       // Top Header: Category Tag & Sector Title
       ctx.font = '800 11px JetBrains Mono';
-      ctx.fillStyle = conf.color;
+      ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.fillText(`[ ${rawName.toUpperCase()} ]`, x0 + 12, y0 + 8);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`[ ${rawName.toUpperCase()} ]`, x0 + 24, y0 + 13);
 
       // Middle Line: Subtitle / Domain Role
       ctx.font = '500 9.5px Inter, sans-serif';
-      ctx.fillStyle = 'rgba(226, 232, 240, 0.75)';
-      ctx.fillText(subtitle.length > 34 ? subtitle.substring(0, 32) + '...' : subtitle, x0 + 12, y0 + 22);
+      ctx.fillStyle = 'rgba(226, 232, 240, 0.85)';
+      ctx.fillText(subtitle, x0 + 14, y0 + 29);
 
-      // Bottom Line: Live Telemetry Metrics
-      ctx.font = '700 9.5px JetBrains Mono';
-      ctx.fillStyle = sector.id === 'hazard' ? '#f43f5e' : 'rgba(56, 189, 248, 0.9)';
-      ctx.fillText(metricsText, x0 + 12, y0 + 36);
+      // Bottom Line: Live Telemetry Metrics with Mini Pill
+      ctx.fillStyle = sector.id === 'hazard' ? 'rgba(244, 63, 94, 0.15)' : 'rgba(56, 189, 248, 0.12)';
+      ctx.strokeStyle = sector.id === 'hazard' ? 'rgba(244, 63, 94, 0.4)' : 'rgba(56, 189, 248, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(x0 + 12, y0 + 40, metW + 16, 14, 3);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = '700 9px JetBrains Mono';
+      ctx.fillStyle = sector.id === 'hazard' ? '#f43f5e' : 'rgba(56, 189, 248, 1)';
+      ctx.fillText(metricsText, x0 + 20, y0 + 47);
 
       ctx.restore();
     }

@@ -129,11 +129,13 @@
 
     <!-- Next-Gen Cyberpunk Entity Inspector (Matching Concept Art Image 3) -->
     <aside id="inspector-panel" class="inspector-drawer hidden">
+    <!-- Next-Gen Cyberpunk Entity Inspector (Matching Concept Art Image 3) -->
+    <aside id="inspector-panel" class="inspector-drawer hidden">
       <!-- Window Control & Header -->
       <div class="drawer-header">
         <div class="inspector-top-meta">
           <div class="cube-holo-preview" id="inspect-holo-box">
-            <div class="holo-cube-wireframe"></div>
+            <canvas id="inspect-holo-canvas" width="44" height="44" style="display:block;"></canvas>
           </div>
           <div class="inspector-identity">
             <h2 id="inspect-entity-name" class="entity-headline-title">renderer.ts</h2>
@@ -152,10 +154,10 @@
 
       <!-- Navigation Tabs -->
       <div class="inspector-tabs-nav">
-        <button class="inspect-tab-btn active" data-tab="overview">Overview</button>
-        <button class="inspect-tab-btn" data-tab="dependencies">Dependencies</button>
-        <button class="inspect-tab-btn" data-tab="calls">Calls</button>
-        <button class="inspect-tab-btn" data-tab="history">History</button>
+        <button class="inspect-tab-btn active" data-tab="overview" id="inspect-tab-btn-overview">Overview</button>
+        <button class="inspect-tab-btn" data-tab="dependencies" id="inspect-tab-btn-deps">Dependencies</button>
+        <button class="inspect-tab-btn" data-tab="calls" id="inspect-tab-btn-calls">Calls</button>
+        <button class="inspect-tab-btn" data-tab="history" id="inspect-tab-btn-history">History</button>
       </div>
 
       <!-- Drawer Content Scrollable -->
@@ -164,7 +166,7 @@
         <div id="tab-pane-overview" class="inspector-tab-pane active">
           <!-- Section 1: METRICS -->
           <div class="inspect-section-block">
-            <div class="section-title-tag">METRICS</div>
+            <div class="section-title-tag" id="inspect-lbl-metrics">METRICS</div>
             
             <div class="cyber-metrics-grid">
               <!-- Centrality Circular Gauge -->
@@ -178,36 +180,36 @@
                     <span id="inspect-centrality-val">94%</span>
                   </div>
                 </div>
-                <div class="metric-card-lbl">CENTRALITY</div>
+                <div class="metric-card-lbl" id="inspect-lbl-centrality-card">CENTRALITY</div>
               </div>
 
               <!-- Dependents / Fan-In -->
               <div class="metric-card">
-                <div class="metric-card-lbl">DEPENDENTS</div>
+                <div class="metric-card-lbl" id="inspect-lbl-dependents-card">DEPENDENTS</div>
                 <div id="inspect-dependents-count" class="metric-card-val cyan-text">41</div>
               </div>
 
               <!-- Calls / Fan-Out -->
               <div class="metric-card">
-                <div class="metric-card-lbl">CALLS</div>
+                <div class="metric-card-lbl" id="inspect-lbl-calls-card">CALLS</div>
                 <div id="inspect-dependencies-count" class="metric-card-val blue-text">1,284</div>
               </div>
 
               <!-- LOC -->
               <div class="metric-card">
-                <div class="metric-card-lbl">LOC</div>
+                <div class="metric-card-lbl" id="inspect-lbl-loc-card">LOC</div>
                 <div id="inspect-loc-val" class="metric-card-val">1,842</div>
               </div>
 
               <!-- File Size -->
               <div class="metric-card">
-                <div class="metric-card-lbl">SIZE</div>
+                <div class="metric-card-lbl" id="inspect-lbl-size-card">SIZE</div>
                 <div id="inspect-filesize-val" class="metric-card-val">14.8 KB</div>
               </div>
 
               <!-- Cyclomatic Complexity -->
               <div class="metric-card">
-                <div class="metric-card-lbl">COMPLEXITY</div>
+                <div class="metric-card-lbl" id="inspect-lbl-complexity-card">COMPLEXITY</div>
                 <div class="complexity-stat-row">
                   <span id="inspect-complexity-text" class="risk-pill-text">HIGH</span>
                   <div id="inspect-complexity-bars" class="mini-bar-indicator">
@@ -223,7 +225,7 @@
 
           <!-- Section 2: ARCHITECTURAL ROLE -->
           <div class="inspect-section-block">
-            <div class="section-title-tag">ARCHITECTURAL ROLE</div>
+            <div class="section-title-tag" id="inspect-lbl-role-sec">ARCHITECTURAL ROLE</div>
             <p id="inspect-diagnosis-text" class="role-desc-text">
               Nucleo principal de ejecucion y renderizado. Controla la pipeline de dibujo, proyeccion 2.5D y gestion de capas.
             </p>
@@ -237,7 +239,7 @@
 
           <!-- Section 3: RISK ANALYSIS & WHY? -->
           <div class="inspect-section-block">
-            <div class="section-title-tag">RISK ANALYSIS</div>
+            <div class="section-title-tag" id="inspect-lbl-risk-sec">RISK ANALYSIS</div>
             <div class="risk-score-strip">
               <span class="risk-score-label">RISK SCORE:</span>
               <span id="inspect-risk-val" class="risk-score-val">87%</span>
@@ -248,7 +250,7 @@
             </div>
             
             <div class="why-causes-box">
-              <div class="why-title">Why?</div>
+              <div class="why-title" id="inspect-lbl-why-title">Why?</div>
               <ul id="inspect-why-list" class="why-points-list">
                 <li>41 modulos dependientes (Punto critico de falla)</li>
                 <li>3 rutas circulares detectadas (SCC Wormhole)</li>
@@ -259,16 +261,16 @@
 
           <!-- Section 4: QUICK ACTIONS -->
           <div class="inspect-section-block">
-            <div class="section-title-tag">QUICK ACTIONS</div>
+            <div class="section-title-tag" id="inspect-lbl-actions-sec">QUICK ACTIONS</div>
             <div class="quick-action-grid">
               <button id="btn-quick-trace-path" class="quick-cyber-btn">
-                <span class="btn-icon">[>]</span> Explore Path
+                <span class="btn-icon">[>]</span> <span id="btn-text-explore">Explore Path</span>
               </button>
               <button id="btn-quick-whatif-sim" class="quick-cyber-btn highlight-danger">
-                <span class="btn-icon">[*]</span> What-If Sim
+                <span class="btn-icon">[*]</span> <span id="btn-text-whatif">What-If Sim</span>
               </button>
               <button id="btn-quick-refactor-arena" class="quick-cyber-btn">
-                <span class="btn-icon">[#]</span> Refactor Arena
+                <span class="btn-icon">[#]</span> <span id="btn-text-refactor">Refactor Arena</span>
               </button>
             </div>
           </div>
@@ -277,7 +279,7 @@
         <!-- TAB 2: DEPENDENCIES -->
         <div id="tab-pane-dependencies" class="inspector-tab-pane">
           <div class="inspect-section-block">
-            <div class="section-title-tag">DIRECT CALLERS / INBOUND (<span id="inspect-callers-tab-count">0</span>)</div>
+            <div class="section-title-tag"><span id="inspect-lbl-callers-title">DIRECT CALLERS / INBOUND</span> (<span id="inspect-callers-tab-count">0</span>)</div>
             <ul id="inspect-callers-list" class="entity-link-list"></ul>
           </div>
         </div>
@@ -285,7 +287,7 @@
         <!-- TAB 3: CALLS -->
         <div id="tab-pane-calls" class="inspector-tab-pane">
           <div class="inspect-section-block">
-            <div class="section-title-tag">OUTGOING DEPENDENCIES (<span id="inspect-deps-tab-count">0</span>)</div>
+            <div class="section-title-tag"><span id="inspect-lbl-deps-title">OUTGOING DEPENDENCIES</span> (<span id="inspect-deps-tab-count">0</span>)</div>
             <ul id="inspect-deps-list" class="entity-link-list"></ul>
           </div>
         </div>
@@ -293,15 +295,13 @@
         <!-- TAB 4: HISTORY -->
         <div id="tab-pane-history" class="inspector-tab-pane">
           <div class="inspect-section-block">
-            <div class="section-title-tag">GIT REVISION AUDIT</div>
+            <div class="section-title-tag" id="inspect-lbl-history-title">GIT REVISION AUDIT</div>
             <div id="inspect-history-log" class="history-log-box">
               <div class="history-item">
                 <span class="commit-dot"></span>
                 <span class="commit-msg">Feat: Enhance procedural building window shaders</span>
                 <span class="commit-author">luisrodriguez · 2 hours ago</span>
               </div>
-            </div>
-          </div>
         </div>
       </div>
     </aside>

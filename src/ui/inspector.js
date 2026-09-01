@@ -3,7 +3,8 @@
  * Displays dedicated architectural inspection card matching Concept Art Image 3.
  *
  * Features:
- * - 4-Tab Navigation: Overview, Dependencies, Calls, History
+ * - Real 2.5D Isometric Building Silhouette Hologram on mini-canvas
+ * - 4-Tab Navigation with 100% reactive bilingual translations
  * - Circular SVG Centrality Progress Ring
  * - Complexity Mini-Bar Indicator
  * - Dynamic Architectural Hashtag Cloud (#core, #engine, #render, #critical)
@@ -13,7 +14,7 @@
  * ZERO EMOJIS.
  */
 
-import { RARITY_CONFIG } from '../analysis/types.js';
+import { RARITY_CONFIG, BIOME_CONFIG } from '../analysis/types.js';
 import { sfx } from '../audio/soundFX.js';
 import { i18n } from '../i18n/translations.js';
 
@@ -26,12 +27,14 @@ export class InspectorController {
     this.container = document.getElementById('inspector-panel');
     this.closeBtn = document.getElementById('close-inspector-btn');
     this.minBtn = document.getElementById('minimize-inspector-btn');
+    this.holoCanvas = document.getElementById('inspect-holo-canvas');
 
     this.activeTab = 'overview';
 
     this.initElements();
     this.initEvents();
     this.subscribeState();
+    this.updateI18nLabels();
   }
 
   initElements() {
@@ -133,10 +136,73 @@ export class InspectorController {
     });
 
     i18n.subscribe(() => {
+      this.updateI18nLabels();
       if (this.state.selectedNodeId) {
         this.renderNodeDetails(this.state.selectedNodeId);
       }
     });
+  }
+
+  updateI18nLabels() {
+    const tabOver = document.getElementById('inspect-tab-btn-overview');
+    if (tabOver) tabOver.textContent = i18n.t('tab_overview');
+
+    const tabDeps = document.getElementById('inspect-tab-btn-deps');
+    if (tabDeps) tabDeps.textContent = i18n.t('tab_dependencies');
+
+    const tabCalls = document.getElementById('inspect-tab-btn-calls');
+    if (tabCalls) tabCalls.textContent = i18n.t('tab_calls');
+
+    const tabHist = document.getElementById('inspect-tab-btn-history');
+    if (tabHist) tabHist.textContent = i18n.t('tab_history');
+
+    const lblMetrics = document.getElementById('inspect-lbl-metrics');
+    if (lblMetrics) lblMetrics.textContent = i18n.t('inspect_sec_metrics');
+
+    const lblCentCard = document.getElementById('inspect-lbl-centrality-card');
+    if (lblCentCard) lblCentCard.textContent = i18n.t('inspect_centrality');
+
+    const lblDepsCard = document.getElementById('inspect-lbl-dependents-card');
+    if (lblDepsCard) lblDepsCard.textContent = i18n.t('inspect_dependents');
+
+    const lblCallsCard = document.getElementById('inspect-lbl-calls-card');
+    if (lblCallsCard) lblCallsCard.textContent = i18n.t('inspect_dependencies');
+
+    const lblLocCard = document.getElementById('inspect-lbl-loc-card');
+    if (lblLocCard) lblLocCard.textContent = i18n.t('inspect_loc');
+
+    const lblSizeCard = document.getElementById('inspect-lbl-size-card');
+    if (lblSizeCard) lblSizeCard.textContent = i18n.t('inspect_size');
+
+    const lblCompCard = document.getElementById('inspect-lbl-complexity-card');
+    if (lblCompCard) lblCompCard.textContent = i18n.t('inspect_complexity');
+
+    const lblRoleSec = document.getElementById('inspect-lbl-role-sec');
+    if (lblRoleSec) lblRoleSec.textContent = i18n.t('inspect_sec_role');
+
+    const lblRiskSec = document.getElementById('inspect-lbl-risk-sec');
+    if (lblRiskSec) lblRiskSec.textContent = i18n.t('inspect_sec_risk');
+
+    const lblWhyTitle = document.getElementById('inspect-lbl-why-title');
+    if (lblWhyTitle) lblWhyTitle.textContent = i18n.t('inspect_why_title');
+
+    const lblActionsSec = document.getElementById('inspect-lbl-actions-sec');
+    if (lblActionsSec) lblActionsSec.textContent = i18n.t('inspect_sec_actions');
+
+    const btnTextExp = document.getElementById('btn-text-explore');
+    if (btnTextExp) btnTextExp.textContent = i18n.t('btn_quick_explore');
+
+    const btnTextWhat = document.getElementById('btn-text-whatif');
+    if (btnTextWhat) btnTextWhat.textContent = i18n.t('btn_quick_whatif');
+
+    const btnTextRef = document.getElementById('btn-text-refactor');
+    if (btnTextRef) btnTextRef.textContent = i18n.t('btn_quick_refactor');
+
+    const lblCallersTitle = document.getElementById('inspect-lbl-callers-title');
+    if (lblCallersTitle) lblCallersTitle.textContent = i18n.t('inspect_callers');
+
+    const lblDepsTitle = document.getElementById('inspect-lbl-deps-title');
+    if (lblDepsTitle) lblDepsTitle.textContent = i18n.t('inspect_deps');
   }
 
   switchTab(tabKey) {
@@ -204,6 +270,9 @@ export class InspectorController {
     if (this.elBiome) {
       this.elBiome.textContent = localizedBiome;
     }
+
+    // Render Mini 2.5D Isometric Building Hologram Canvas
+    this.renderBuildingHologram(node, stat);
 
     // 2. Metrics Grid
     const centralityScore = Math.max(1, stat.centralityPct || 50);
@@ -376,5 +445,82 @@ export class InspectorController {
         </div>
       `;
     }
+  }
+
+  /**
+   * Renders the authentic 2.5D building hologram thumbnail matching the map silhouette.
+   */
+  renderBuildingHologram(node, stat) {
+    if (!this.holoCanvas) return;
+    const ctx = this.holoCanvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, 44, 44);
+
+    const biomeConf = BIOME_CONFIG[node.biome] || BIOME_CONFIG.core;
+    const color = biomeConf.color || '#38bdf8';
+    const rarity = stat?.rarity || 'common';
+
+    const cx = 22;
+    const cy = 34; // Base position
+
+    const w = 14;
+    const h = Math.min(22, Math.max(10, Math.round((stat?.loc || 100) / 70)));
+
+    // Ground platform shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 12, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2.5D Isometric Building Silhouette
+    // Left Wall Facet
+    ctx.fillStyle = `${color}40`;
+    ctx.strokeStyle = `${color}cc`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - w, cy - 3);
+    ctx.lineTo(cx, cy + 3);
+    ctx.lineTo(cx, cy - h + 3);
+    ctx.lineTo(cx - w, cy - h - 3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Right Wall Facet
+    ctx.fillStyle = `${color}80`;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + 3);
+    ctx.lineTo(cx + w, cy - 3);
+    ctx.lineTo(cx + w, cy - h - 3);
+    ctx.lineTo(cx, cy - h + 3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Top Roof Facet
+    ctx.fillStyle = `${color}bb`;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - h + 3);
+    ctx.lineTo(cx + w, cy - h - 3);
+    ctx.lineTo(cx, cy - h - 9);
+    ctx.lineTo(cx - w, cy - h - 3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Central Antenna / Spire
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - h - 9);
+    ctx.lineTo(cx, cy - h - 16);
+    ctx.stroke();
+
+    // Spire Neon Beacon Glow
+    ctx.fillStyle = rarity === 'mythic' ? '#f43f5e' : rarity === 'legendary' ? '#fbbf24' : '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(cx, cy - h - 16, 2, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
