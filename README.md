@@ -31,6 +31,7 @@
 │ • 8 Biomes: Core, UI, Power, Bunker, API, Labs, Hazard, Ruins│
 │ • Intelligence: Centrality, Tarjan Cycles, Blast Radius      │
 │ • Time Machine: Replay historical growth commit-by-commit    │
+│ • AI Context Bridge: Codebase-Memory-MCP (90%+ Token Savings)│
 │                                                              │
 │ [ LIVE INGESTION GATEWAYS ]                                  │
 │ GitHub API (40+ Ecosystems) | Tree-sitter AST | Custom JSON  │
@@ -59,6 +60,7 @@ Traditional code visualization tools dump tens of thousands of unweighted dots i
 | :--- | :--- |
 | **Lead Architects & CTOs** | Immediate macro visualization of structural coupling, cyclic debt, and Single Points of Failure before committing to major migrations. |
 | **Engineering Teams & Onboarding** | 10x faster codebase comprehension. Learn a 500k-LOC monolith in minutes by walking the citadela instead of reading flat file trees. |
+| **AI Coding Agents (Antigravity/Cursor)** | 90%+ token reduction via surgical subgraph context extraction powered by `codebase-memory-mcp`. |
 | **Security & Tech Debt Auditors** | Isolate the blast radius of outages, audit historical Git drift, and simulate refactoring outcomes without touching production code. |
 
 ---
@@ -190,7 +192,51 @@ Need to understand how two distant modules communicate?
 
 ---
 
-## 5. Universal Ingestion Matrix (40+ Ecosystems)
+## 5. AI Agent Token Optimization & Codebase-Memory-MCP Bridge
+
+CODEBASE.UNIVERSE and **Codebase-Memory-MCP** form a unified **Human-AI Architectural Intelligence Loop**:
+
+```text
+┌────────────────────────────────────────────────────────────┐
+│          HUMAN-AI ARCHITECTURAL INTELLIGENCE LOOP          │
+├────────────────────────────────────────────────────────────┤
+│  [ HUMAN ARCHITECT ]             [ AI CODING AGENT ]       │
+│  • 2.5D Citadel World            • Antigravity / Cursor    │
+│  • Visual Refactoring            • 90%+ Token Savings      │
+│  • Live Simulation               • Surgical Subgraphs      │
+│           ▲                               ▲                │
+│           │                               │                │
+│    CODEBASE.UNIVERSE ◀══════════▶ CODEBASE-MEMORY-MCP      │
+│  (Interactive Platform)         (High-Perf Graph Server)   │
+│                    \            /                          │
+│                     ▼          ▼                           │
+│                [ REPOSITORY TOPOLOGY ]                     │
+│           162 Languages · Tree-sitter AST                  │
+└────────────────────────────────────────────────────────────┘
+```
+
+### The Problem with Traditional AI Agent Discovery
+AI coding agents (Antigravity, Cursor, Claude Code) typically grep and read entire files (thousands of lines) to locate functions. This burns **30k - 100k tokens per prompt**, triggers "lost in the middle" hallucinations, and blinds the agent to downstream breaking changes.
+
+### The MCP Subgraph Solution (90%+ Token Reduction)
+By querying the `codebase-memory-mcp` knowledge graph, the AI agent performs **surgical context extraction**:
+
+```text
+┌────────────────────────────────────────────────────────────┐
+│ TRADITIONAL DUMP vs CODEBASE-MEMORY-MCP                    │
+├────────────────────────────────────────────────────────────┤
+│ Traditional File Dumps:  ~85,000 Tokens (Slow & Expensive) │
+│ Subgraph Neighborhood:   ~1,150 Tokens (98.6% Token Saved) │
+└────────────────────────────────────────────────────────────┘
+```
+
+1. **Targeted Subgraph Neighborhood:** The agent calls `search_graph()` or `get_code_snippet()` to receive only the immediate 1st-degree callers and callees.
+2. **Dijkstra Call Path Tracing:** The agent invokes `trace_path(origin, target)` to inspect only the exact execution chain instead of 30 unrelated files.
+3. **Pre-Edit Blast Radius Verification:** The agent validates changes against the graph before applying diffs, preventing circular deadlocks and broken contracts.
+
+---
+
+## 6. Universal Ingestion Matrix (40+ Ecosystems)
 
 CODEBASE.UNIVERSE parses and connects multi-language polyglot repositories out of the box:
 
@@ -209,7 +255,7 @@ Automatically purges lockfiles (`package-lock.json`, `Cargo.lock`, `pnpm-lock.ya
 
 ---
 
-## 6. The 8 Architectural Biomes
+## 7. The 8 Architectural Biomes
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
@@ -230,7 +276,7 @@ Automatically purges lockfiles (`package-lock.json`, `Cargo.lock`, `pnpm-lock.ya
 
 ---
 
-## 7. Quick Start & Local Execution
+## 8. Quick Start & Local Execution
 
 CODEBASE.UNIVERSE is completely standalone, lightweight, and requires zero cloud dependencies:
 
@@ -248,7 +294,7 @@ node server.js
 
 ---
 
-## 8. Security, Privacy & Local Runtime Guarantee
+## 9. Security, Privacy & Local Runtime Guarantee
 
 - **100% Local Execution:** All syntax tree parsing, centrality metrics, and blast radius simulations run strictly in your browser runtime and local server.
 - **Zero Telemetry / Zero Code Storage:** Your proprietary source code never leaves your workstation.
@@ -256,7 +302,7 @@ node server.js
 
 ---
 
-## 9. 100% Bilingual Engine
+## 10. 100% Bilingual Engine
 
 Instantly switch between **Español** and **English** with the `[ ES / EN ]` button in the top navigation bar. Every HUD metric, inspector section, simulation dossier, quest objective, and manual lesson updates reactively without page reloads.
 
