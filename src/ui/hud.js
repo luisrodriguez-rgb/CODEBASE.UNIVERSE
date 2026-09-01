@@ -1,15 +1,17 @@
 /**
  * Telemetry Bar, Filter Deck, Action Dock & Audio/i18n Coordinator for CODEBASE.UNIVERSE.
+ * ZERO EMOJIS.
  */
 
 import { sfx } from '../audio/soundFX.js';
 import { i18n } from '../i18n/translations.js';
 
 export class HudController {
-  constructor(state, manualModal, world = null) {
+  constructor(state, manualModal, world = null, githubModal = null) {
     this.state = state;
     this.manualModal = manualModal;
     this.world = world;
+    this.githubModal = githubModal;
 
     this.initElements();
     this.initEvents();
@@ -29,6 +31,7 @@ export class HudController {
     this.zoomInBtn = document.getElementById('zoom-in-btn');
     this.zoomOutBtn = document.getElementById('zoom-out-btn');
     this.zoomResetBtn = document.getElementById('zoom-reset-btn');
+    this.tracePathBtn = document.getElementById('btn-open-trace-path');
 
     this.dockTabs = document.querySelectorAll('.dock-tab');
     this.helpGuideBtn = document.getElementById('help-guide-btn');
@@ -101,23 +104,15 @@ export class HudController {
       }
     });
 
-    // Switch Project Trigger
+    // Switch Project / GitHub Cloud Explorer Trigger
     this.switchProjectBtn?.addEventListener('click', () => {
       sfx.playClick();
-      const splash = document.getElementById('title-screen');
-      if (splash) splash.classList.remove('hidden');
-    });
-
-    // Modal Close buttons
-    document.querySelectorAll('[data-close]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        sfx.playClick();
-        const modalId = btn.getAttribute('data-close');
-        const targetModal = document.getElementById(modalId);
-        if (targetModal) targetModal.classList.add('hidden');
-        document.getElementById('modal-backdrop')?.classList.add('hidden');
-        if (this.world) this.world.activeMode = 'world';
-      });
+      if (this.githubModal) {
+        this.githubModal.open();
+      } else {
+        const splash = document.getElementById('title-screen');
+        if (splash) splash.classList.remove('hidden');
+      }
     });
 
     // Backdrop Click
@@ -198,21 +193,22 @@ export class HudController {
 
     const knowledgePct = this.state.knowledgeTracker?.getCompletionPercentage() || 0;
     if (this.statKnowledge) this.statKnowledge.textContent = `${knowledgePct}%`;
-    if (this.codedexBadge) this.codedexBadge.textContent = `${knowledgePct}%`;
 
-    const xp = this.state.knowledgeTracker?.totalXP || 1450;
-    const rank = this.state.knowledgeTracker?.getRankTitle() || 'INTERN APPRENTICE (LVL 01)';
-    if (this.playerRank) this.playerRank.textContent = rank;
-    if (this.playerXp) this.playerXp.textContent = `${xp.toLocaleString()} XP`;
+    if (this.playerRank) this.playerRank.textContent = this.state.knowledgeTracker?.getCurrentRank() || 'STAFF ARCHITECT';
+    if (this.playerXp) this.playerXp.textContent = `${(this.state.knowledgeTracker?.xp || 0).toLocaleString()} XP`;
 
-    const activeQuests = this.state.quests?.filter(q => !q.completed).length || 0;
+    const activeQuestsCount = this.state.questEngine?.getActiveQuests()?.length || 3;
     if (this.activeQuestsBadge) {
-      this.activeQuestsBadge.textContent = `${activeQuests} ${i18n.t('active_badge')}`;
+      this.activeQuestsBadge.textContent = `${activeQuestsCount} ${i18n.t('active_badge') || 'ACTIVE'}`;
     }
 
     const threatCount = analysis.threats?.length || 0;
     if (this.threatCountBadge) {
-      this.threatCountBadge.textContent = `${threatCount} ${i18n.t('detected_badge')}`;
+      this.threatCountBadge.textContent = `${threatCount} ${i18n.t('detected_badge') || 'DETECTED'}`;
+    }
+
+    if (this.codedexBadge) {
+      this.codedexBadge.textContent = `${knowledgePct}%`;
     }
   }
 
@@ -270,6 +266,10 @@ export class HudController {
 
     const zoomReset = document.getElementById('zoom-reset-btn');
     if (zoomReset) zoomReset.textContent = i18n.t('cam_reset');
+
+    if (this.tracePathBtn) {
+      this.tracePathBtn.textContent = i18n.currentLang === 'es' ? '[>] RASTREAR RUTA' : '[>] TRACE PATH';
+    }
 
     const dockWorld = document.getElementById('dock-text-world');
     if (dockWorld) dockWorld.textContent = i18n.t('dock_world');

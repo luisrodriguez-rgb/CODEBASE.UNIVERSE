@@ -19,6 +19,7 @@ import { WhatIfViewController } from './ui/whatIfView.js';
 import { TimelineViewController } from './ui/timelineView.js';
 import { TracePathModalController } from './ui/tracePathModal.js';
 import { ArchitecturalEventManager } from './game/architecturalEvents.js';
+import { GitHubModalController } from './ui/githubModal.js';
 import { HudController } from './ui/hud.js';
 import { TitleScreenController } from './ui/titleScreen.js';
 
@@ -28,6 +29,7 @@ class CodebaseUniverseApp {
     this.minimapCanvas = document.getElementById('minimap-canvas');
     this.world = null;
     this.manualModal = null;
+    this.githubModal = null;
     this.eventManager = null;
     this.views = {};
     this.hud = null;
@@ -38,14 +40,18 @@ class CodebaseUniverseApp {
   init() {
     this.manualModal = new ManualModal();
 
+    this.githubModal = new GitHubModalController((projectKey, customGraph, projectName) => {
+      this.loadProject(projectKey, customGraph, projectName);
+    });
+
     this.titleScreen = new TitleScreenController(
       () => {
         const sel = document.getElementById('project-select-dropdown');
         const projectKey = sel?.value || 'sketion';
         this.loadProject(projectKey);
       },
-      (projectKey, customGraph) => {
-        this.loadProject(projectKey, customGraph);
+      (projectKey, customGraph, projectName) => {
+        this.loadProject(projectKey, customGraph, projectName);
       }
     );
 
@@ -53,20 +59,20 @@ class CodebaseUniverseApp {
     this.loadProject('sketion');
   }
 
-  loadProject(projectKey, customGraph = null) {
+  loadProject(projectKey, customGraph = null, customName = null) {
     if (this.world) {
       this.world.stop();
     }
 
     let graph;
-    let projectName = 'SKETION ENGINE';
+    let projectName = customName || 'SKETION ENGINE';
 
     if (projectKey === 'router') {
       graph = buildRouterGraph();
       projectName = 'NEO-API ROUTER & GATEWAY';
     } else if (projectKey === 'custom_raw' && customGraph) {
       graph = customGraph;
-      projectName = 'CUSTOM REPOSITORY';
+      projectName = customName || 'CUSTOM REPOSITORY';
     } else {
       graph = buildSketionGraph();
       projectName = 'SKETION ENGINE';
@@ -108,7 +114,7 @@ class CodebaseUniverseApp {
     this.eventManager.startEventSimulation();
 
     // 6. Initialize HUD Coordinator
-    this.hud = new HudController(globalState, this.manualModal, this.world);
+    this.hud = new HudController(globalState, this.manualModal, this.world, this.githubModal);
 
     // Connect Trace Path Launcher Button
     document.getElementById('btn-open-trace-path')?.addEventListener('click', () => {

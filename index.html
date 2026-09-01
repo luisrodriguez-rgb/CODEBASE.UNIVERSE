@@ -362,11 +362,53 @@
       <div id="timeline-archaeology-box" style="margin-top:10px;border-top:1px solid rgba(30,41,59,0.5);padding-top:8px;"></div>
     </div>
 
+    <!-- GitHub Cloud Repository Importer Modal -->
+    <section id="github-import-modal" class="deck-modal hidden" style="max-width:720px;height:auto;max-height:640px;">
+      <div class="modal-header">
+        <h2 id="gh-modal-header-title">GITHUB CLOUD IMPORTER // REPOSITORY EXPLORER</h2>
+        <button id="close-gh-modal-btn" class="modal-close-btn" data-close="github-import-modal">[X]</button>
+      </div>
+      <div style="padding:24px;display:flex;flex-direction:column;gap:16px;">
+        <p style="font-size:11.5px;color:var(--text-secondary);margin:0;line-height:1.4;">
+          Connect to any public GitHub repository or provide a Personal Access Token to explore private codebases directly via GitHub API.
+        </p>
+        
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="field-group">
+            <label style="font-size:10px;font-weight:700;color:var(--accent-cyan);letter-spacing:0.05em;">REPOSITORY SLUG OR URL</label>
+            <input type="text" id="gh-repo-slug-input" placeholder="e.g. facebook/react, vuejs/core, luisrodriguez-rgb/CODEBASE.UNIVERSE" class="styled-select" style="width:100%;">
+          </div>
+
+          <div class="field-group">
+            <label style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:0.05em;">GITHUB PERSONAL ACCESS TOKEN (OPTIONAL - FOR PRIVATE REPOS & UNLIMITED RATE LIMIT)</label>
+            <input type="password" id="gh-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="styled-select" style="width:100%;">
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:0.05em;">POPULAR OPEN SOURCE REPOSITORIES:</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+            <button class="gh-preset-chip filter-chip" data-slug="facebook/react">facebook/react</button>
+            <button class="gh-preset-chip filter-chip" data-slug="vuejs/core">vuejs/core</button>
+            <button class="gh-preset-chip filter-chip" data-slug="expressjs/express">expressjs/express</button>
+            <button class="gh-preset-chip filter-chip" data-slug="pmndrs/zustand">pmndrs/zustand</button>
+            <button class="gh-preset-chip filter-chip" data-slug="luisrodriguez-rgb/CODEBASE.UNIVERSE">CODEBASE.UNIVERSE</button>
+          </div>
+        </div>
+
+        <button id="btn-execute-gh-import" class="execute-sim-btn" style="background:var(--accent-cyan);color:#050811;margin-top:8px;">
+          [>] IMPORT & GENERATE UNIVERSE
+        </button>
+
+        <div id="gh-import-status-box" class="manifesto-box hidden" style="font-size:11px;"></div>
+      </div>
+    </section>
+
     <!-- Architect's Manual Modal (Dedicated 8-Tab Deck) -->
     <section id="manual-modal" class="deck-modal hidden">
       <div class="modal-header">
         <h2 id="manual-modal-header-title">ARCHITECT'S CODEX // SYSTEM MANUAL</h2>
-        <button class="modal-close-btn" data-close="manual-modal">✕</button>
+        <button class="modal-close-btn" data-close="manual-modal">[X]</button>
       </div>
       <div class="manual-layout-grid">
         <div class="manual-nav-sidebar">

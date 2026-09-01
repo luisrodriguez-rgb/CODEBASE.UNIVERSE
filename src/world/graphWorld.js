@@ -221,25 +221,78 @@ export class GraphWorld {
 
   renderBiomeTerritories(ctx) {
     ctx.save();
+
+    // --- CENTRAL CORE NEXUS SUN (The Heart of the Universe) ---
+    const pulse = Math.sin(this.time * 2.2);
+    const sunGlow = ctx.createRadialGradient(0, 0, 10, 0, 0, 240);
+    sunGlow.addColorStop(0, 'rgba(251, 191, 36, 0.35)');
+    sunGlow.addColorStop(0.3, 'rgba(56, 189, 248, 0.15)');
+    sunGlow.addColorStop(0.7, 'rgba(56, 189, 248, 0.04)');
+    sunGlow.addColorStop(1, 'transparent');
+
+    ctx.fillStyle = sunGlow;
+    ctx.beginPath();
+    ctx.arc(0, 0, 240, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Central Sun Core Orb
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.9)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 12 + pulse * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Rotating Astronomical Constellation Grid Rings
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.25)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 8]);
+    ctx.beginPath();
+    ctx.arc(0, 0, 90, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+    ctx.setLineDash([8, 14]);
+    ctx.beginPath();
+    ctx.arc(0, 0, 380, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Radial Constellation Highway Lines to each Biome
     for (const sector of Object.values(BIOME_SECTORS)) {
       const conf = BIOME_CONFIG[sector.id] || BIOME_CONFIG.core;
-      const localizedName = i18n.t(`biome_${sector.id}`) || sector.name;
-      const localizedDesc = i18n.t(`biome_${sector.id}_desc`) || conf.desc;
+      
+      // Radial highway conduit
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.18)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([3, 5]);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(sector.x, sector.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Moving solar packet
+      const t = (this.time * 0.4 + (sector.x * 0.001)) % 1;
+      const px = sector.x * t;
+      const py = sector.y * t;
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+      ctx.fill();
 
       // Soft Nebula Territory Glow
-      const glow = ctx.createRadialGradient(sector.x, sector.y, 10, sector.x, sector.y, sector.radius + 50);
-      glow.addColorStop(0, `${conf.color}18`);
-      glow.addColorStop(0.7, `${conf.color}04`);
+      const glow = ctx.createRadialGradient(sector.x, sector.y, 10, sector.x, sector.y, sector.radius + 60);
+      glow.addColorStop(0, `${conf.color}25`);
+      glow.addColorStop(0.6, `${conf.color}08`);
       glow.addColorStop(1, 'transparent');
 
       ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(sector.x, sector.y, sector.radius + 50, 0, Math.PI * 2);
+      ctx.arc(sector.x, sector.y, sector.radius + 60, 0, Math.PI * 2);
       ctx.fill();
 
       // Outer Range Ring
-      ctx.strokeStyle = `${conf.color}30`;
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = `${conf.color}45`;
+      ctx.lineWidth = 1.2;
       ctx.setLineDash([6, 8]);
       ctx.beginPath();
       ctx.arc(sector.x, sector.y, sector.radius + 10, 0, Math.PI * 2);
@@ -247,17 +300,18 @@ export class GraphWorld {
       ctx.setLineDash([]);
 
       // Tactical Sector Label Pill
+      const localizedName = i18n.t(`biome_${sector.id}`) || sector.name;
       ctx.save();
-      ctx.translate(sector.x, sector.y - sector.radius - 22);
+      ctx.translate(sector.x, sector.y - sector.radius - 24);
       
       ctx.font = '700 11px JetBrains Mono';
       const textWidth = ctx.measureText(localizedName).width;
       
-      ctx.fillStyle = 'rgba(7, 11, 20, 0.9)';
-      ctx.strokeStyle = `${conf.color}60`;
-      ctx.lineWidth = 1;
+      ctx.fillStyle = 'rgba(7, 11, 20, 0.95)';
+      ctx.strokeStyle = `${conf.color}80`;
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.roundRect(-textWidth / 2 - 10, -9, textWidth + 20, 18, 3);
+      ctx.roundRect(-textWidth / 2 - 12, -10, textWidth + 24, 20, 4);
       ctx.fill();
       ctx.stroke();
 
