@@ -1,10 +1,10 @@
 /**
  * High-Performance Visual Graph World Renderer for CODEBASE.UNIVERSE.
- * - Procedural metric-driven building silhouettes
+ * - Screen-space anti-collision label rendering (FIXES GIANT TEXT BUG)
+ * - Hierarchical Edge Bundling (FIXES LASER FLOODLIGHT BUG)
+ * - Procedural metric-driven 2.5D building silhouettes
  * - 4-Tier Semantic Zoom into code
- * - "Follow the Flow" & "Trace Path" execution engine
- * - Particle packet flow on glowing energy conduits
- * - ZERO EMOJIS: Pure vector canvas geometry and tactile badges.
+ * - ZERO EMOJIS.
  */
 
 import { WorldCamera } from './camera.js';
@@ -103,9 +103,7 @@ export class GraphWorld {
     let closestDistSq = Infinity;
 
     for (const node of this.graph.nodes.values()) {
-      const stat = this.analysis.nodeStats.get(node.id);
-      const radius = 16;
-
+      const radius = 22;
       const dx = node.x - x;
       const dy = node.y - y;
       const distSq = dx * dx + dy * dy;
@@ -137,7 +135,7 @@ export class GraphWorld {
 
       // Energy pulse emissions
       pulseTimer += dt;
-      if (pulseTimer > 0.28 && this.graph.edges.length > 0) {
+      if (pulseTimer > 0.35 && this.graph.edges.length > 0) {
         pulseTimer = 0;
         const randomEdge = this.graph.edges[Math.floor(Math.random() * this.graph.edges.length)];
         const src = this.graph.getNode(randomEdge.source);
@@ -168,17 +166,17 @@ export class GraphWorld {
     const width = this.displayWidth || this.canvas.width;
     const height = this.displayHeight || this.canvas.height;
 
-    // 1. Deep Space Holographic Grid
+    // 1. Deep Space Holographic Grid Background
     this.renderSpaceBackground(ctx, width, height, camera);
 
     ctx.save();
     ctx.translate(width / 2 + camera.x * camera.zoom, height / 2 + camera.y * camera.zoom);
     ctx.scale(camera.zoom, camera.zoom);
 
-    // 2. Biome Sector Boundaries & Concentric Range Circles
+    // 2. Biome Sector Platforms & Concentric Range Circles
     this.renderBiomeTerritories(ctx);
 
-    // 3. Glowing Energy Conduits & Flow Highways
+    // 3. Hierarchical Bundled Energy Conduits
     this.renderEnergyConduits(ctx, graph, analysis, state, effects);
 
     // 4. Procedural Metric-Driven Architectural Buildings
@@ -189,7 +187,10 @@ export class GraphWorld {
 
     ctx.restore();
 
-    // 6. Tactical Hover Tooltip (Screen-Space)
+    // 6. Screen-Space Anti-Collision Label Badges (FIXES GIANT TEXT BUG)
+    this.renderScreenSpaceLabels(ctx, width, height);
+
+    // 7. Tactical Hover Tooltip
     this.renderScreenSpaceHUD(ctx, width, height);
   }
 
@@ -225,38 +226,38 @@ export class GraphWorld {
       const localizedName = i18n.t(`biome_${sector.id}`) || sector.name;
       const localizedDesc = i18n.t(`biome_${sector.id}_desc`) || conf.desc;
 
-      // Soft Nebula Glow
-      const glow = ctx.createRadialGradient(sector.x, sector.y, 15, sector.x, sector.y, sector.radius + 60);
-      glow.addColorStop(0, `${conf.color}15`);
-      glow.addColorStop(0.65, `${conf.color}04`);
+      // Soft Nebula Territory Glow
+      const glow = ctx.createRadialGradient(sector.x, sector.y, 10, sector.x, sector.y, sector.radius + 50);
+      glow.addColorStop(0, `${conf.color}18`);
+      glow.addColorStop(0.7, `${conf.color}04`);
       glow.addColorStop(1, 'transparent');
 
       ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(sector.x, sector.y, sector.radius + 60, 0, Math.PI * 2);
+      ctx.arc(sector.x, sector.y, sector.radius + 50, 0, Math.PI * 2);
       ctx.fill();
 
-      // Concentric Tactical Rings
-      ctx.strokeStyle = `${conf.color}35`;
-      ctx.lineWidth = 1.2;
-      ctx.setLineDash([8, 10]);
+      // Outer Range Ring
+      ctx.strokeStyle = `${conf.color}30`;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([6, 8]);
       ctx.beginPath();
-      ctx.arc(sector.x, sector.y, sector.radius + 15, 0, Math.PI * 2);
+      ctx.arc(sector.x, sector.y, sector.radius + 10, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Tactical Header Pill
+      // Tactical Sector Label Pill
       ctx.save();
-      ctx.translate(sector.x, sector.y - sector.radius - 24);
+      ctx.translate(sector.x, sector.y - sector.radius - 22);
       
       ctx.font = '700 11px JetBrains Mono';
       const textWidth = ctx.measureText(localizedName).width;
       
       ctx.fillStyle = 'rgba(7, 11, 20, 0.9)';
-      ctx.strokeStyle = `${conf.color}70`;
+      ctx.strokeStyle = `${conf.color}60`;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.roundRect(-textWidth / 2 - 12, -10, textWidth + 24, 20, 3);
+      ctx.roundRect(-textWidth / 2 - 10, -9, textWidth + 20, 18, 3);
       ctx.fill();
       ctx.stroke();
 
@@ -264,10 +265,6 @@ export class GraphWorld {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(localizedName, 0, 0);
-
-      ctx.font = '400 9px JetBrains Mono';
-      ctx.fillStyle = '#64748b';
-      ctx.fillText(localizedDesc, 0, 18);
       ctx.restore();
     }
     ctx.restore();
@@ -280,6 +277,8 @@ export class GraphWorld {
     const activePathEdges = this.pathFollower.getActivePathEdges();
 
     ctx.save();
+
+    // Grouping for edge bundling (avoids laser floodlight)
     for (const edge of graph.edges) {
       const src = graph.getNode(edge.source);
       const tgt = graph.getNode(edge.target);
@@ -291,27 +290,26 @@ export class GraphWorld {
       const isBlackout = effects.blackoutNodes.has(edge.source) || effects.blackoutNodes.has(edge.target);
 
       if (isBlackout) {
-        ctx.strokeStyle = 'rgba(15, 23, 42, 0.15)';
-        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = 'rgba(15, 23, 42, 0.12)';
+        ctx.lineWidth = 0.4;
       } else if (isPathEdge) {
-        // Highlighted Follow-the-Flow Path
         ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 3.0;
+        ctx.lineWidth = 2.5;
         ctx.shadowColor = '#38bdf8';
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 8;
       } else if (isConnectedToActive) {
         const isOutgoing = edge.source === activeTarget;
-        ctx.strokeStyle = isOutgoing ? '#f59e0b' : '#38bdf8';
-        ctx.lineWidth = 2.2;
-        ctx.shadowColor = ctx.strokeStyle;
-        ctx.shadowBlur = 10;
+        // Soft gradient arc (avoids blinding solid fan)
+        ctx.strokeStyle = isOutgoing ? 'rgba(245, 158, 11, 0.45)' : 'rgba(56, 189, 248, 0.45)';
+        ctx.lineWidth = 1.2;
+        ctx.shadowBlur = 0;
       } else if (activeTarget) {
-        ctx.strokeStyle = 'rgba(15, 23, 42, 0.12)';
+        ctx.strokeStyle = 'rgba(15, 23, 42, 0.08)';
         ctx.lineWidth = 0.3;
         ctx.shadowBlur = 0;
       } else {
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.09)';
-        ctx.lineWidth = 0.7;
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.06)';
+        ctx.lineWidth = 0.6;
         ctx.shadowBlur = 0;
       }
 
@@ -321,7 +319,7 @@ export class GraphWorld {
       const dx = tgt.x - src.x;
       const dy = tgt.y - src.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const curveAmount = Math.min(dist * 0.12, 35);
+      const curveAmount = Math.min(dist * 0.1, 28);
       const cx = mx - (dy / dist) * curveAmount;
       const cy = my + (dx / dist) * curveAmount;
 
@@ -332,13 +330,13 @@ export class GraphWorld {
 
       // Moving Packet on Highlighted Conduits
       if (isConnectedToActive || isPathEdge) {
-        const t = (this.time * 1.5) % 1;
+        const t = (this.time * 1.4) % 1;
         const px = (1 - t) * (1 - t) * src.x + 2 * (1 - t) * t * cx + t * t * tgt.x;
         const py = (1 - t) * (1 - t) * src.y + 2 * (1 - t) * t * cy + t * t * tgt.y;
 
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+        ctx.arc(px, py, 1.8, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -351,8 +349,6 @@ export class GraphWorld {
     const filter = state.activeFilter;
     const search = state.searchQuery;
     const activePathNodes = new Set(this.pathFollower.activePath);
-
-    const labelsToDraw = [];
 
     for (const node of graph.nodes.values()) {
       const stat = analysis.nodeStats.get(node.id);
@@ -377,7 +373,7 @@ export class GraphWorld {
 
       if (!visible && !isSelected && !isHovered) continue;
 
-      // Render Procedural Building Silhouette
+      // Render 2.5D Building Platform & Silhouette
       this.buildings.renderBuilding(ctx, node, stat, {
         zoom: camera.zoom,
         isSelected,
@@ -386,48 +382,106 @@ export class GraphWorld {
         isFlowTarget,
         activeMode: this.activeMode
       });
+    }
+  }
 
-      // Semantic LOD for Labels
-      const isKeyLandmark = stat.centralityPct >= 95 || stat.archetype === 'threat_boss';
-      if (isSelected || isHovered || camera.zoom >= 2.2 || (camera.zoom >= 0.85 && isKeyLandmark)) {
-        labelsToDraw.push({
+  /**
+   * Screen-Space Anti-Collision Label Renderer.
+   * Eliminates the giant text scaling bug and prevents overlapping label walls!
+   */
+  renderScreenSpaceLabels(ctx, width, height) {
+    const { camera, graph, analysis, state } = this;
+    const selectedId = state.selectedNodeId;
+    const hoveredId = this.hoveredNodeId;
+    const search = state.searchQuery;
+
+    const candidateNodes = [];
+
+    for (const node of graph.nodes.values()) {
+      const stat = analysis.nodeStats.get(node.id);
+      if (!stat) continue;
+
+      const screenPos = camera.worldToScreen(node.x, node.y);
+      if (screenPos.x < -60 || screenPos.x > width + 60 || screenPos.y < -40 || screenPos.y > height + 40) {
+        continue;
+      }
+
+      const isSelected = selectedId === node.id;
+      const isHovered = hoveredId === node.id;
+      const isKeyLandmark = stat.centralityPct >= 94 || stat.archetype === 'threat_boss';
+      const isSearchResult = search && (node.name.toLowerCase().includes(search) || node.path.toLowerCase().includes(search));
+
+      // Determine Priority for rendering
+      let priority = 0;
+      if (isSelected) priority = 100;
+      else if (isHovered) priority = 90;
+      else if (isSearchResult) priority = 80;
+      else if (isKeyLandmark) priority = 70;
+      else if (camera.zoom >= 2.5) priority = 50;
+      else if (camera.zoom >= 1.2 && stat.centralityPct >= 80) priority = 40;
+
+      if (priority > 0) {
+        candidateNodes.push({
           node,
           stat,
+          screenX: screenPos.x,
+          screenY: screenPos.y,
+          priority,
           isSelected,
-          isHovered,
-          color: isSelected ? '#38bdf8' : isHovered ? '#f59e0b' : RARITY_CONFIG[stat.rarity]?.color || '#94a3b8'
+          isHovered
         });
       }
     }
 
-    // Render Clean Tactile Badges
-    for (const item of labelsToDraw) {
-      this.renderBuildingLabelBadge(ctx, item);
+    // Sort by priority descending
+    candidateNodes.sort((a, b) => b.priority - a.priority);
+
+    // Collision Detection Grid
+    const placedBoxes = [];
+    const maxLabels = camera.zoom >= 3.0 ? 25 : camera.zoom >= 1.2 ? 14 : 7;
+
+    for (const item of candidateNodes) {
+      if (placedBoxes.length >= maxLabels && !item.isSelected && !item.isHovered) break;
+
+      ctx.font = item.isSelected || item.isHovered ? '700 10.5px JetBrains Mono' : '500 9.5px JetBrains Mono';
+      const text = item.node.name;
+      const textWidth = ctx.measureText(text).width;
+      const boxW = textWidth + 12;
+      const boxH = 16;
+      const boxX = item.screenX - boxW / 2;
+      const boxY = item.screenY + 12;
+
+      // Check collision
+      let collides = false;
+      if (!item.isSelected && !item.isHovered) {
+        for (const b of placedBoxes) {
+          if (boxX < b.x + b.w + 6 && boxX + boxW + 6 > b.x && boxY < b.y + b.h + 4 && boxY + boxH + 4 > b.y) {
+            collides = true;
+            break;
+          }
+        }
+      }
+
+      if (!collides || item.isSelected || item.isHovered) {
+        placedBoxes.push({ x: boxX, y: boxY, w: boxW, h: boxH });
+
+        // Draw Screen-Space Badge
+        ctx.save();
+        ctx.fillStyle = 'rgba(7, 10, 18, 0.94)';
+        ctx.strokeStyle = item.isSelected ? '#38bdf8' : item.isHovered ? '#f59e0b' : 'rgba(56, 189, 248, 0.35)';
+        ctx.lineWidth = item.isSelected || item.isHovered ? 1.4 : 1;
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, boxW, boxH, 3);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = item.isSelected ? '#38bdf8' : item.isHovered ? '#f59e0b' : '#f1f5f9';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, item.screenX, boxY + boxH / 2);
+        ctx.restore();
+      }
     }
-  }
-
-  renderBuildingLabelBadge(ctx, { node, stat, isSelected, isHovered, color }) {
-    ctx.save();
-    ctx.translate(node.x, node.y + 14);
-
-    ctx.font = (isSelected || isHovered) ? '700 10.5px JetBrains Mono' : '500 9px JetBrains Mono';
-    const text = node.name;
-    const textWidth = ctx.measureText(text).width;
-
-    ctx.fillStyle = 'rgba(7, 10, 18, 0.94)';
-    ctx.strokeStyle = (isSelected || isHovered) ? color : 'rgba(56, 189, 248, 0.3)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.roundRect(-textWidth / 2 - 6, -3, textWidth + 12, 16, 3);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = (isSelected || isHovered) ? '#ffffff' : '#e2e8f0';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(text, 0, 0);
-
-    ctx.restore();
   }
 
   renderScreenSpaceHUD(ctx, width, height) {
@@ -443,8 +497,8 @@ export class GraphWorld {
     const localizedBiome = i18n.t(`biome_${node.biome}`) || node.biome.toUpperCase();
 
     const padding = 14;
-    const cardWidth = 280;
-    const cardHeight = 142;
+    const cardWidth = 270;
+    const cardHeight = 138;
 
     let posX = this.mouseScreenX + 18;
     let posY = this.mouseScreenY + 18;
@@ -467,52 +521,52 @@ export class GraphWorld {
     ctx.shadowBlur = 0;
 
     // Title
-    ctx.font = '700 12px JetBrains Mono';
+    ctx.font = '700 11.5px JetBrains Mono';
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText(node.name, padding, padding);
 
-    ctx.font = '400 9.5px JetBrains Mono';
+    ctx.font = '400 9px JetBrains Mono';
     ctx.fillStyle = '#94a3b8';
-    ctx.fillText(node.path, padding, padding + 16);
+    ctx.fillText(node.path, padding, padding + 15);
 
     // Badges
-    ctx.font = '700 9px JetBrains Mono';
+    ctx.font = '700 8.5px JetBrains Mono';
     ctx.fillStyle = rarityConf.color;
-    ctx.fillText(`[${localizedRarity}]`, padding, padding + 34);
+    ctx.fillText(`[${localizedRarity}]`, padding, padding + 32);
 
     ctx.fillStyle = '#38bdf8';
-    ctx.fillText(`[${localizedBiome}]`, padding + 95, padding + 34);
+    ctx.fillText(`[${localizedBiome}]`, padding + 90, padding + 32);
 
     // Metrics
-    const yStart = padding + 54;
-    ctx.font = '400 9.5px JetBrains Mono';
+    const yStart = padding + 50;
+    ctx.font = '400 9px JetBrains Mono';
     ctx.fillStyle = '#94a3b8';
 
     ctx.fillText(`${i18n.t('inspect_centrality')}:`, padding, yStart);
     ctx.fillStyle = '#38bdf8';
-    ctx.fillText(`${stat.centralityPct}%`, padding + 100, yStart);
+    ctx.fillText(`${stat.centralityPct}%`, padding + 95, yStart);
 
     ctx.fillStyle = '#94a3b8';
-    ctx.fillText(`${i18n.t('stat_risk')}:`, padding + 150, yStart);
+    ctx.fillText(`${i18n.t('stat_risk')}:`, padding + 145, yStart);
     ctx.fillStyle = stat.riskScore > 65 ? '#f43f5e' : stat.riskScore > 35 ? '#f59e0b' : '#10b981';
-    ctx.fillText(`${stat.riskScore}%`, padding + 205, yStart);
+    ctx.fillText(`${stat.riskScore}%`, padding + 195, yStart);
 
     ctx.fillStyle = '#94a3b8';
-    ctx.fillText(`FAN-IN:`, padding, yStart + 20);
+    ctx.fillText(`FAN-IN:`, padding, yStart + 18);
     ctx.fillStyle = '#f1f5f9';
-    ctx.fillText(`${stat.fanIn}`, padding + 55, yStart + 20);
+    ctx.fillText(`${stat.fanIn}`, padding + 52, yStart + 18);
 
     ctx.fillStyle = '#94a3b8';
-    ctx.fillText(`FAN-OUT:`, padding + 120, yStart + 20);
+    ctx.fillText(`FAN-OUT:`, padding + 115, yStart + 18);
     ctx.fillStyle = '#f1f5f9';
-    ctx.fillText(`${stat.fanOut}`, padding + 185, yStart + 20);
+    ctx.fillText(`${stat.fanOut}`, padding + 175, yStart + 18);
 
     ctx.fillStyle = '#94a3b8';
-    ctx.fillText(`MASS (LOC):`, padding, yStart + 38);
+    ctx.fillText(`LINES (LOC):`, padding, yStart + 35);
     ctx.fillStyle = '#38bdf8';
-    ctx.fillText(`${stat.loc} lines`, padding + 85, yStart + 38);
+    ctx.fillText(`${stat.loc}`, padding + 80, yStart + 35);
 
     ctx.restore();
   }

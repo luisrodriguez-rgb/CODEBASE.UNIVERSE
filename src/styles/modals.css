@@ -584,16 +584,16 @@
   bottom: 52px;
   left: 0;
   right: 0;
-  height: 145px;
-  background: rgba(8, 12, 22, 0.97);
+  height: 155px;
+  background: rgba(8, 12, 22, 0.98);
   backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(56, 189, 248, 0.25);
+  border-top: 1px solid rgba(56, 189, 248, 0.3);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 14px 28px;
-  z-index: 35;
-  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.7);
+  z-index: 65;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.85);
 }
 
 .timeline-header {
@@ -1046,7 +1046,8 @@
 .event-ticker-box {
   position: absolute;
   top: 68px;
-  left: 24px;
+  right: 24px;
+  left: auto;
   max-width: 420px;
   background: rgba(8, 12, 22, 0.95);
   backdrop-filter: blur(16px);
