@@ -15,6 +15,7 @@ export const BIOME_CONFIG = {
   power: { name: 'Power Grid', color: '#f59e0b', desc: 'State management, store slices & event buses' },
   bunker: { name: 'Subterranean Bunker', color: '#3b82f6', desc: 'Persistence, database, storage & caching' },
   network: { name: 'Transmission Hub', color: '#06b6d4', desc: 'APIs, routers, web sockets & protocols' },
+  transmission: { name: 'Transmission Hub', color: '#06b6d4', desc: 'APIs, routers, web sockets & protocols' },
   lab: { name: 'Research Labs', color: '#10b981', desc: 'Test suites, mocks, assertions & benchmarks' },
   hazard: { name: 'Hazard Sector', color: '#f43f5e', desc: 'High-risk modules, anomalies & circular paths' },
   ruins: { name: 'Forgotten Ruins', color: '#64748b', desc: 'Dead code, deprecated modules & leaf utilities' }

@@ -84,25 +84,44 @@ export class CbmBridgeDriver {
   static classifyCbmBiome(label, path, raw) {
     const p = (path || '').toLowerCase();
     const l = (label || '').toLowerCase();
+    const n = (raw.name || '').toLowerCase();
 
-    if (l === 'route' || l === 'resource' || p.includes('/api/') || p.includes('/routes/') || p.includes('/controllers/') || p.includes('/gateway/')) {
-      return 'transmission';
+    // 1. Hazard Sector (High cyclomatic debt, complex monoliths)
+    if (raw.complexity >= 18 || raw.riskScore >= 75 || raw.is_anomaly || p.includes('/hazard/')) {
+      return 'hazard';
     }
-    if (p.includes('/ui/') || p.includes('/components/') || p.includes('/views/') || p.includes('.tsx') || p.includes('.jsx') || p.includes('.vue')) {
-      return 'ui';
-    }
-    if (p.includes('/store/') || p.includes('/state/') || p.includes('/events/') || p.includes('/redux/') || p.includes('/emitter/')) {
-      return 'power';
-    }
-    if (p.includes('/db/') || p.includes('/models/') || p.includes('/storage/') || p.includes('/cache/') || p.includes('/repository/')) {
-      return 'bunker';
-    }
-    if (p.includes('/test/') || p.includes('/spec/') || p.includes('test.') || p.includes('/benchmark/')) {
-      return 'lab';
-    }
-    if (p.includes('/deprecated/') || p.includes('/legacy/') || raw.is_dead_code) {
+
+    // 2. Forgotten Ruins (Dead code, deprecated utilities)
+    if (p.includes('/deprecated/') || p.includes('/legacy/') || p.includes('/old/') || raw.is_dead_code) {
       return 'ruins';
     }
+
+    // 3. UI Metropolis (Components, Views, Styles, Templates, Inspector, HUD)
+    if (p.includes('/ui/') || p.includes('/components/') || p.includes('/views/') || p.includes('/styles/') || p.includes('/i18n/') || p.includes('translations') || p.includes('.css') || p.includes('.tsx') || p.includes('.jsx') || p.includes('.vue') || p.includes('index.html')) {
+      return 'ui';
+    }
+
+    // 4. Power Grid (State, Store, Events, Knowledge Tracker, Audio, SoundFX)
+    if (p.includes('/game/') || p.includes('/audio/') || p.includes('/sound') || p.includes('state') || p.includes('tracker') || p.includes('events') || p.includes('/store/') || p.includes('/redux/') || p.includes('/zustand') || p.includes('/bus/')) {
+      return 'power';
+    }
+
+    // 5. Subterranean Bunker (Data sources, Datasets, SQLite, Models, Persistence, Cache, Ingestion)
+    if (p.includes('/data/') || p.includes('dataset') || p.includes('ingest') || p.includes('/db/') || p.includes('/models/') || p.includes('/storage/') || p.includes('/cache/') || p.includes('.json') || p.includes('.sql') || p.includes('.prisma')) {
+      return 'bunker';
+    }
+
+    // 6. Transmission Hub (APIs, Server, Indexer, AST Parsers, Git Importers, Network, WebSockets, CLI)
+    if (p.includes('/indexer/') || p.includes('parser') || p.includes('bridge') || p.includes('scanner') || p.includes('server.js') || p.includes('/bin/') || p.includes('/api/') || p.includes('/routes/') || p.includes('/controllers/') || p.includes('/gateway/') || p.includes('importer') || l === 'route' || l === 'resource') {
+      return 'transmission';
+    }
+
+    // 7. Research Labs (Analysis algorithms, Centrality, Cycles, Blast Radius, Archaeology, Test suites)
+    if (p.includes('/analysis/') || p.includes('centrality') || p.includes('complexity') || p.includes('cycles') || p.includes('blast') || p.includes('archaeology') || p.includes('history') || p.includes('/test/') || p.includes('/tests/') || p.includes('/spec/') || p.includes('benchmark')) {
+      return 'lab';
+    }
+
+    // 8. Core Citadel (Main engine loop, World layout, Camera, Minimap, Conduits, Buildings)
     return 'core';
   }
 }

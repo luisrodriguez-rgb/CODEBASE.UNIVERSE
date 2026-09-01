@@ -269,41 +269,44 @@ export class GraphWorld {
     for (const sector of Object.values(BIOME_SECTORS)) {
       const nodeCount = biomeNodeCounts.get(sector.id) || 0;
       
-      // If the sector is not the central core and has NO nodes, skip rendering conduits and packets
-      if (sector.id !== 'core' && nodeCount === 0) {
+      // If the sector has NO nodes, skip rendering completely (Zero ghost empty circles!)
+      if (nodeCount === 0) {
         continue;
       }
 
       const conf = BIOME_CONFIG[sector.id] || BIOME_CONFIG.core;
+      const sectorRadius = Math.max(90, Math.sqrt(nodeCount) * 38 + 25);
       
       // Radial highway conduit
-      ctx.strokeStyle = 'rgba(251, 191, 36, 0.18)';
-      ctx.lineWidth = 1.2;
-      ctx.setLineDash([3, 5]);
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(sector.x, sector.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      if (sector.id !== 'core') {
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.18)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 5]);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(sector.x, sector.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
 
-      // Moving solar packet
-      const t = (this.time * 0.4 + (sector.x * 0.001)) % 1;
-      const px = sector.x * t;
-      const py = sector.y * t;
-      ctx.fillStyle = '#fbbf24';
-      ctx.beginPath();
-      ctx.arc(px, py, 2.2, 0, Math.PI * 2);
-      ctx.fill();
+        // Moving solar packet
+        const t = (this.time * 0.4 + (sector.x * 0.001)) % 1;
+        const px = sector.x * t;
+        const py = sector.y * t;
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // Soft Nebula Territory Glow
-      const glow = ctx.createRadialGradient(sector.x, sector.y, 10, sector.x, sector.y, sector.radius + 60);
+      const glow = ctx.createRadialGradient(sector.x, sector.y, 10, sector.x, sector.y, sectorRadius + 50);
       glow.addColorStop(0, `${conf.color}25`);
       glow.addColorStop(0.6, `${conf.color}08`);
       glow.addColorStop(1, 'transparent');
 
       ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(sector.x, sector.y, sector.radius + 60, 0, Math.PI * 2);
+      ctx.arc(sector.x, sector.y, sectorRadius + 50, 0, Math.PI * 2);
       ctx.fill();
 
       // Outer Range Ring
@@ -311,7 +314,7 @@ export class GraphWorld {
       ctx.lineWidth = 1.2;
       ctx.setLineDash([6, 8]);
       ctx.beginPath();
-      ctx.arc(sector.x, sector.y, sector.radius + 10, 0, Math.PI * 2);
+      ctx.arc(sector.x, sector.y, sectorRadius + 10, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
 
@@ -339,7 +342,11 @@ export class GraphWorld {
         : `${nodeCount} ${isEs ? 'entidades' : 'entities'} · ${sectorEdges} ${isEs ? 'conexiones' : 'links'}`;
 
       ctx.save();
-      ctx.translate(sector.x, sector.y - sector.radius - 42);
+      ctx.translate(sector.x, sector.y - sectorRadius - 28);
+
+      // Invariant scale compensation so cards NEVER shrink into unreadable micro-dots when zoomed out!
+      const zoomCompensation = Math.min(2.2, Math.max(1.0, 0.75 / camera.zoom));
+      ctx.scale(zoomCompensation, zoomCompensation);
 
       // Measure exact text widths to dynamically size the card (No text cutoff or overflow!)
       ctx.font = '800 11px JetBrains Mono';

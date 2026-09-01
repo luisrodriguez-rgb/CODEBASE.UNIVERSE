@@ -147,25 +147,39 @@ export class UniversalAstParser {
   }
 
   static classifyBiome(path) {
-    const p = path.toLowerCase();
-    if (p.includes('/ui/') || p.includes('/components/') || p.includes('/views/') || p.includes('/pages/') || p.includes('.tsx') || p.includes('.jsx')) {
+    const p = (path || '').toLowerCase();
+
+    // 1. UI Metropolis (Views, Components, Pages, Styles, HUD, Inspector)
+    if (p.includes('/ui/') || p.includes('/components/') || p.includes('/views/') || p.includes('/pages/') || p.includes('/styles/') || p.includes('/i18n/') || p.includes('translations') || p.includes('.css') || p.includes('.tsx') || p.includes('.jsx') || p.includes('.vue') || p.includes('index.html')) {
       return 'ui';
     }
-    if (p.includes('/store/') || p.includes('/state/') || p.includes('/redux/') || p.includes('/events/')) {
+
+    // 2. Power Grid (State, Store, Events, Knowledge Tracker, Audio, SoundFX)
+    if (p.includes('/game/') || p.includes('/audio/') || p.includes('/sound') || p.includes('state') || p.includes('tracker') || p.includes('events') || p.includes('/store/') || p.includes('/redux/') || p.includes('/zustand') || p.includes('/bus/')) {
       return 'power';
     }
-    if (p.includes('/db/') || p.includes('/database/') || p.includes('/models/') || p.includes('/storage/') || p.includes('/cache/')) {
+
+    // 3. Subterranean Bunker (Data sources, Datasets, SQLite, Models, Persistence, Cache, Ingestion)
+    if (p.includes('/data/') || p.includes('dataset') || p.includes('ingest') || p.includes('/db/') || p.includes('/models/') || p.includes('/storage/') || p.includes('/cache/') || p.includes('.json') || p.includes('.sql') || p.includes('.prisma')) {
       return 'bunker';
     }
-    if (p.includes('/api/') || p.includes('/routes/') || p.includes('/network/') || p.includes('/controllers/') || p.includes('/services/')) {
-      return 'network';
+
+    // 4. Transmission Hub (APIs, Server, Indexer, AST Parsers, Git Importers, Network, WebSockets, CLI)
+    if (p.includes('/indexer/') || p.includes('parser') || p.includes('bridge') || p.includes('scanner') || p.includes('server.js') || p.includes('/bin/') || p.includes('/api/') || p.includes('/routes/') || p.includes('/controllers/') || p.includes('/gateway/') || p.includes('importer')) {
+      return 'transmission';
     }
-    if (p.includes('/test/') || p.includes('/tests/') || p.includes('/spec/') || p.includes('test.') || p.includes('spec.')) {
+
+    // 5. Research Labs (Analysis algorithms, Centrality, Cycles, Blast Radius, Archaeology, Test suites)
+    if (p.includes('/analysis/') || p.includes('centrality') || p.includes('complexity') || p.includes('cycles') || p.includes('blast') || p.includes('archaeology') || p.includes('history') || p.includes('/test/') || p.includes('/tests/') || p.includes('/spec/') || p.includes('benchmark')) {
       return 'lab';
     }
-    if (p.includes('/legacy/') || p.includes('/deprecated/') || p.includes('/old/')) {
+
+    // 6. Forgotten Ruins (Dead code, deprecated utilities)
+    if (p.includes('/deprecated/') || p.includes('/legacy/') || p.includes('/old/')) {
       return 'ruins';
     }
+
+    // 7. Core Citadel (Main engine loop, World layout, Camera, Minimap, Conduits, Buildings)
     return 'core';
   }
 }
