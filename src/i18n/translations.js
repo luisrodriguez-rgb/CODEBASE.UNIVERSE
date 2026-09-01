@@ -19,6 +19,33 @@ export const TRANSLATIONS = {
     stat_risk: 'RISK',
     stat_knowledge: 'KNOWLEDGE',
     stat_rank: 'RANK',
+
+    // Landing Command Center Dashboard
+    landing_portal_title: 'CODEBASE.UNIVERSE // COMMAND CENTER',
+    landing_tagline: 'Explore. Understand. Simulate.',
+    landing_subtext: 'Transform your software repositories into living 2.5D architectural citadels and interactive simulation worlds.',
+    
+    portal_card_gh_title: '01 // GITHUB CLOUD IMPORTER',
+    portal_card_gh_desc: 'Connect public repositories or authenticate with a token to import and parse real Git trees in real-time.',
+    portal_card_cbm_title: '02 // LOCAL & CBM ENGINE',
+    portal_card_cbm_desc: 'Scan your local workspace with Tree-sitter & Codebase-Memory-MCP (162 languages, Hybrid LSP type resolution).',
+    portal_card_demo_title: '03 // ARCHITECTURAL PRESET WORLDS',
+    portal_card_demo_desc: 'Launch pre-computed architectural simulation universes or drop custom graph AST JSON files.',
+
+    portal_btn_gh_import: '[>] IMPORT REPOSITORY',
+    portal_btn_local_scan: '[>] SCAN LOCAL REPO',
+    portal_btn_launch_preset: '[>] LAUNCH SIMULATION',
+    portal_lbl_token_optional: 'GitHub Token (Optional - for private repos & rate limits)',
+    portal_lbl_custom_drop: 'Drag & drop JSON graph or click to upload',
+
+    portal_feature_1: '2.5D PROCEDURAL CITADELS',
+    portal_feature_1_desc: 'Height & spires scaled to LOC & cyclomatic complexity',
+    portal_feature_2: 'DIJKSTRA TRACE PATH GPS',
+    portal_feature_2_desc: 'Shortest dependency route & animated particle flights',
+    portal_feature_3: 'WHAT-IF BLAST RADIUS',
+    portal_feature_3_desc: '4-scenario cascade failure & refactoring reduction',
+    portal_feature_4: 'DETECTIVE & ARCHAEOLOGY',
+    portal_feature_4_desc: 'Root cause investigations, SOLID lessons & relic discovery',
     
     // Floating controls
     search_placeholder: 'Search function, module, class, file...',
@@ -195,6 +222,33 @@ export const TRANSLATIONS = {
     stat_risk: 'RIESGO',
     stat_knowledge: 'CONOCIMIENTO',
     stat_rank: 'RANGO',
+
+    // Landing Command Center Dashboard
+    landing_portal_title: 'CODEBASE.UNIVERSE // CENTRO DE COMANDO',
+    landing_tagline: 'Explora. Comprende. Simula.',
+    landing_subtext: 'Transforma tus repositorios de software en ciudadelas arquitectónicas 2.5D y mundos de simulación interactivos.',
+    
+    portal_card_gh_title: '01 // IMPORTADOR GITHUB CLOUD',
+    portal_card_gh_desc: 'Conecta repositorios públicos o autentícate con un token para importar y parsear árboles de Git en tiempo real.',
+    portal_card_cbm_title: '02 // MOTOR LOCAL & CBM',
+    portal_card_cbm_desc: 'Escanea tu espacio local con Tree-sitter y Codebase-Memory-MCP (162 lenguajes, resolución de tipos Hybrid LSP).',
+    portal_card_demo_title: '03 // MUNDOS ARQUITECTÓNICOS PREDEFINIDOS',
+    portal_card_demo_desc: 'Lanza universos de simulación precalculados o arrastra archivos JSON de grafos y AST personalizados.',
+
+    portal_btn_gh_import: '[>] IMPORTAR REPOSITORIO',
+    portal_btn_local_scan: '[>] ESCANEAR REPOSITORIO LOCAL',
+    portal_btn_launch_preset: '[>] LANZAR SIMULACIÓN',
+    portal_lbl_token_optional: 'Token de GitHub (Opcional - para repos privados y sin límites de API)',
+    portal_lbl_custom_drop: 'Arrastra un JSON de grafo o haz clic para subir',
+
+    portal_feature_1: 'CIUDADELAS PROCEDURALES 2.5D',
+    portal_feature_1_desc: 'Altura y agujas escaladas a LOC y complejidad ciclomática',
+    portal_feature_2: 'GPS TRACE PATH DIJKSTRA',
+    portal_feature_2_desc: 'Ruta de dependencias más corta y vuelos con partículas animadas',
+    portal_feature_3: 'RADIO DE IMPACTO WHAT-IF',
+    portal_feature_3_desc: 'Fallo en cascada en 4 escenarios y reducción de riesgo',
+    portal_feature_4: 'DETECTIVE Y ARQUEOLOGÍA',
+    portal_feature_4_desc: 'Investigación de causa raíz, lecciones SOLID y reliquias',
     
     // Floating controls
     search_placeholder: 'Buscar función, módulo, clase, archivo...',

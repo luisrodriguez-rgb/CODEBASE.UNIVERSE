@@ -427,45 +427,155 @@
       </div>
     </section>
 
-    <!-- Title / Initial Splash Screen -->
+    <!-- Next-Gen Command Center Landing Dashboard -->
     <div id="title-screen" class="title-screen-overlay">
-      <div class="title-card">
-        <div class="terminal-header-strip">
-          <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
-          <span id="title-term-title" class="term-title">CODEBASE.UNIVERSE // SYSTEM INITIALIZE</span>
+      <div class="command-center-dashboard">
+        
+        <!-- Dashboard Top Navigation Bar -->
+        <header class="cc-header">
+          <div class="cc-brand">
+            <span class="cc-status-orb"></span>
+            <span id="cc-brand-title" class="cc-brand-title">CODEBASE.UNIVERSE</span>
+            <span class="cc-version-tag">v2.5 GA // ARCHITECTURAL INTELLIGENCE</span>
+          </div>
+          <div class="cc-header-actions">
+            <button id="landing-lang-toggle-btn" class="cyber-btn" title="Toggle Language (ES / EN)">ES / EN</button>
+            <button id="landing-sound-toggle-btn" class="cyber-btn">SFX: ON</button>
+          </div>
+        </header>
+
+        <!-- Dashboard Hero Banner -->
+        <div class="cc-hero">
+          <h1 id="landing-hero-title" class="glitch-title">SOFTWARE AS A LIVING CITADEL</h1>
+          <p id="landing-hero-subtitle" class="cc-hero-desc">
+            Transform static repositories into living 2.5D architectural megastructures, simulate cascade failures in real time, and trace complex call graphs with sub-millisecond precision.
+          </p>
         </div>
-        <div class="title-body">
-          <div class="title-logo-block">
-            <h1 id="title-main-h1" class="glitch-title">CODEBASE.UNIVERSE</h1>
-            <p id="title-main-subtitle" class="subtitle">Explore your software as a living system.</p>
+
+        <!-- 3 Ingestion Gateway Cards -->
+        <div class="cc-grid-cards">
+          
+          <!-- Card 1: GitHub Cloud Importer -->
+          <div class="cc-card cc-card-github">
+            <div class="cc-card-header">
+              <span class="cc-card-num">01</span>
+              <h3 id="card-gh-heading">GITHUB CLOUD IMPORTER</h3>
+            </div>
+            <p id="card-gh-desc" class="cc-card-desc">
+              Import public repositories or provide a token to parse private Git trees and generate live topologic worlds.
+            </p>
+            
+            <div class="cc-field-stack">
+              <input type="text" id="landing-gh-slug-input" placeholder="e.g. facebook/react, pmndrs/zustand" class="styled-select" style="width:100%;font-size:11px;">
+              <input type="password" id="landing-gh-token-input" placeholder="GitHub Token (Optional)" class="styled-select" style="width:100%;font-size:11px;">
+            </div>
+
+            <div class="cc-preset-chips">
+              <button class="landing-gh-chip" data-slug="facebook/react">react</button>
+              <button class="landing-gh-chip" data-slug="vuejs/core">vue</button>
+              <button class="landing-gh-chip" data-slug="expressjs/express">express</button>
+              <button class="landing-gh-chip" data-slug="pmndrs/zustand">zustand</button>
+            </div>
+
+            <button id="landing-btn-github-import" class="execute-sim-btn" style="margin-top:auto;background:var(--accent-cyan);color:#050811;">
+              [>] IMPORT FROM GITHUB
+            </button>
           </div>
 
-          <div class="preset-selector-box">
-            <label for="project-select-dropdown" id="title-select-label">SELECT CODEBASE UNIVERSE:</label>
-            <select id="project-select-dropdown" class="styled-select project-dropdown">
-              <option value="sketion">SKETION ENGINE (568 entities, 1,520 relations, 7 threats)</option>
-              <option value="router">NEO-API GATEWAY & DISTRIBUTED ROUTER (312 entities, 840 relations)</option>
-              <option value="live_scan">[LIVE] SCAN LOCAL REPOSITORY DIRECTORY</option>
-              <option value="custom">IMPORT CUSTOM CODEBASE (JSON / AST / DIRECTORY)</option>
-            </select>
+          <!-- Card 2: Local & Codebase-Memory-MCP Engine -->
+          <div class="cc-card cc-card-local">
+            <div class="cc-card-header">
+              <span class="cc-card-num" style="color:var(--accent-amber);">02</span>
+              <h3 id="card-cbm-heading">LOCAL & CBM ENGINE</h3>
+            </div>
+            <p id="card-cbm-desc" class="cc-card-desc">
+              Direct integration with local workspace & Codebase-Memory-MCP (162 languages, Hybrid LSP semantic type resolution).
+            </p>
+
+            <div class="cc-field-stack">
+              <label style="font-size:9.5px;font-weight:700;color:var(--text-muted);letter-spacing:0.05em;">INDEXED LOCAL PROJECTS (CBM / AST):</label>
+              <select id="landing-cbm-select" class="styled-select" style="width:100%;font-size:11px;">
+                <option value="local_current">[SCAN] CURRENT WORKSPACE (CODEBASE.UNIVERSE)</option>
+              </select>
+            </div>
+
+            <div class="cbm-tech-badge-strip">
+              <span class="cbm-badge">162 LANGUAGES</span>
+              <span class="cbm-badge">HYBRID LSP</span>
+              <span class="cbm-badge">SQLITE IN-MEMORY</span>
+            </div>
+
+            <button id="landing-btn-local-scan" class="execute-sim-btn" style="margin-top:auto;background:var(--accent-amber);color:#050811;">
+              [>] SCAN LOCAL REPOSITORY
+            </button>
           </div>
 
-          <div id="custom-import-box" class="custom-import-dropzone hidden">
-            <p id="title-custom-hint">Drag & drop graph JSON or AST export here, or click to upload</p>
-            <input type="file" id="custom-file-input" accept=".json,.zip">
+          <!-- Card 3: Architectural Preset Worlds -->
+          <div class="cc-card cc-card-demo">
+            <div class="cc-card-header">
+              <span class="cc-card-num" style="color:var(--accent-green);">03</span>
+              <h3 id="card-demo-heading">PRESET WORLDS & AST</h3>
+            </div>
+            <p id="card-demo-desc" class="cc-card-desc">
+              Launch pre-computed architectural demonstration universes or upload custom graph AST JSON schemas.
+            </p>
+
+            <div class="cc-field-stack">
+              <select id="landing-preset-select" class="styled-select" style="width:100%;font-size:11px;">
+                <option value="sketion">SKETION ENGINE (568 entities, 1,520 relations, 7 threats)</option>
+                <option value="router">NEO-API DISTRIBUTED GATEWAY (312 entities, 840 relations)</option>
+              </select>
+              
+              <div id="landing-dropzone" class="custom-import-dropzone" style="padding:10px 14px;min-height:auto;">
+                <p id="landing-drop-text" style="font-size:10px;margin:0;">Drag & drop AST JSON or click to upload</p>
+                <input type="file" id="landing-file-input" accept=".json" style="display:none;">
+              </div>
+            </div>
+
+            <button id="landing-btn-preset-launch" class="execute-sim-btn" style="margin-top:auto;background:var(--accent-green);color:#050811;">
+              [>] LAUNCH ARCHITECTURAL WORLD
+            </button>
           </div>
 
-          <div class="manifesto-box">
-            <div class="manifesto-line"><span class="prompt">></span> STATUS: SYSTEM READY</div>
-            <div class="manifesto-line"><span class="prompt">></span> PARSER: SEMANTIC GRAPH & AST TOPOLOGY ONLINE</div>
-            <div class="manifesto-line"><span class="prompt">></span> SIMULATION: WHAT-IF IMPACT & BLAST RADIUS LOADED</div>
-            <div class="manifesto-line"><span class="prompt">></span> OBJECTIVE: EXPLORE. UNDERSTAND. REFACTOR. MASTER.</div>
-          </div>
-
-          <button id="enter-world-btn" class="enter-world-cta">
-            [ ENTER WORLD // INITIALIZE SIMULATION ]
-          </button>
         </div>
+
+        <!-- Terminal Ingestion Status Box -->
+        <div id="landing-terminal-box" class="manifesto-box hidden" style="margin-top:16px;font-size:11px;">
+          <div id="landing-terminal-log"></div>
+        </div>
+
+        <!-- Dashboard Feature Strip -->
+        <footer class="cc-features-strip">
+          <div class="cc-feature-item">
+            <span class="cc-feat-icon">[01]</span>
+            <div>
+              <strong id="feat-1-title">2.5D PROCEDURAL CITADELS</strong>
+              <p id="feat-1-desc">Towering spires scaled to LOC & cyclomatic mass</p>
+            </div>
+          </div>
+          <div class="cc-feature-item">
+            <span class="cc-feat-icon">[02]</span>
+            <div>
+              <strong id="feat-2-title">DIJKSTRA TRACE PATH GPS</strong>
+              <p id="feat-2-desc">Shortest dependency routes & dynamic particle flights</p>
+            </div>
+          </div>
+          <div class="cc-feature-item">
+            <span class="cc-feat-icon">[03]</span>
+            <div>
+              <strong id="feat-3-title">WHAT-IF BLAST RADIUS</strong>
+              <p id="feat-3-desc">4-scenario cascade failure & refactoring reduction</p>
+            </div>
+          </div>
+          <div class="cc-feature-item">
+            <span class="cc-feat-icon">[04]</span>
+            <div>
+              <strong id="feat-4-title">CODE DETECTIVE & ARCHAEOLOGY</strong>
+              <p id="feat-4-desc">Root cause investigations & SOLID refactoring lessons</p>
+            </div>
+          </div>
+        </footer>
+
       </div>
     </div>
   </div>
