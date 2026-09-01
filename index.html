@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CODEBASE MEMORY // ARCHITECTURAL SIMULATION</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/styles/main.css">
+  <link rel="stylesheet" href="/src/styles/hud.css">
+  <link rel="stylesheet" href="/src/styles/modals.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Top Cyber Telemetry Bar -->
+    <header id="telemetry-bar">
+      <div class="brand">
+        <span class="system-status-indicator"></span>
+        <span class="brand-title">CODEBASE MEMORY</span>
+        <span class="brand-version">v2.0.0</span>
+      </div>
+      <div class="project-info">
+        <span class="project-label">PROJECT:</span>
+        <span id="current-project-name" class="project-name">SKETION ENGINE</span>
+        <span id="system-health-tag" class="status-tag status-developing">DEVELOPING</span>
+      </div>
+      <div class="metrics-strip">
+        <div class="metric-item" title="Total Entities">
+          <span class="metric-label">ENTITIES</span>
+          <span id="stat-entities" class="metric-value">568</span>
+        </div>
+        <div class="metric-item" title="Total Relations">
+          <span class="metric-label">EDGES</span>
+          <span id="stat-edges" class="metric-value">1,520</span>
+        </div>
+        <div class="metric-item" title="Overall Architectural Risk">
+          <span class="metric-label">RISK</span>
+          <span id="stat-risk" class="metric-value risk-medium">38%</span>
+        </div>
+        <div class="metric-item" title="Architectural Knowledge Mastered">
+          <span class="metric-label">KNOWLEDGE</span>
+          <span id="stat-knowledge" class="metric-value">34%</span>
+        </div>
+        <div class="metric-item xp-container" title="Architect Experience">
+          <span class="metric-label">RANK</span>
+          <span id="player-rank" class="metric-value highlight">STAFF ARCHITECT</span>
+          <span id="player-xp" class="xp-sub">8,420 XP</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Interactive World Canvas -->
+    <main id="world-container">
+      <canvas id="world-canvas"></canvas>
+      <div id="canvas-overlay">
+        <!-- Floating Scan & Filter Deck -->
+        <div class="floating-controls-deck">
+          <div class="search-box">
+            <input type="text" id="node-search-input" placeholder="Search function, module, class, file..." autocomplete="off">
+            <button id="search-clear-btn" class="icon-btn" title="Clear Search">✕</button>
+          </div>
+          <div class="filter-pills">
+            <button class="pill active" data-filter="all">ALL</button>
+            <button class="pill" data-filter="modules">MODULES</button>
+            <button class="pill" data-filter="functions">FUNCTIONS</button>
+            <button class="pill" data-filter="hotspots">HOTSPOTS</button>
+            <button class="pill" data-filter="cycles">ANOMALIES (CYCLES)</button>
+            <button class="pill" data-filter="threats">THREATS</button>
+            <button class="pill" data-filter="unused">DEAD CODE</button>
+          </div>
+        </div>
+
+        <!-- Zoom & Viewport Telemetry -->
+        <div class="zoom-telemetry">
+          <span id="semantic-zoom-level" class="zoom-badge">LEVEL: MODULE</span>
+          <div class="camera-controls">
+            <button id="zoom-in-btn" class="cam-btn" title="Zoom In">+</button>
+            <button id="zoom-out-btn" class="cam-btn" title="Zoom Out">-</button>
+            <button id="zoom-reset-btn" class="cam-btn" title="Reset View">RESET</button>
+          </div>
+        </div>
+
+        <!-- Minimap Radar -->
+        <div id="minimap-container">
+          <canvas id="minimap-canvas" width="160" height="120"></canvas>
+          <div class="minimap-label">RADAR // TOPOLOGY</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Navigation & Action Deck -->
+    <footer id="action-dock">
+      <div class="dock-left">
+        <button id="nav-world-btn" class="dock-tab active">
+          <span class="tab-code">[01]</span> WORLD MAP
+        </button>
+        <button id="nav-codedex-btn" class="dock-tab">
+          <span class="tab-code">[02]</span> CODEDEX <span id="codedex-badge" class="badge">61%</span>
+        </button>
+        <button id="nav-quests-btn" class="dock-tab">
+          <span class="tab-code">[03]</span> QUESTS <span id="active-quests-badge" class="badge highlight">3 ACTIVE</span>
+        </button>
+        <button id="nav-threats-btn" class="dock-tab">
+          <span class="tab-code">[04]</span> THREAT ARENA <span id="threat-count-badge" class="badge threat-badge">7 DETECTED</span>
+        </button>
+        <button id="nav-whatif-btn" class="dock-tab">
+          <span class="tab-code">[05]</span> WHAT-IF LAB
+        </button>
+        <button id="nav-timeline-btn" class="dock-tab">
+          <span class="tab-code">[06]</span> TIME MACHINE
+        </button>
+      </div>
+      <div class="dock-right">
+        <button id="switch-project-btn" class="action-btn secondary">SWITCH REPO</button>
+        <button id="help-guide-btn" class="action-btn">MANUAL</button>
+      </div>
+    </footer>
+
+    <!-- Side Inspection Panel (Sliding Drawer) -->
+    <aside id="inspector-panel" class="inspector-drawer hidden">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <span id="inspect-rarity-tag" class="rarity-tag rarity-legendary">LEGENDARY</span>
+          <span id="inspect-biome-tag" class="biome-tag">CORE CITADEL</span>
+        </div>
+        <button id="close-inspector-btn" class="close-btn">✕</button>
+      </div>
+      <div class="drawer-content">
+        <div class="entity-headline">
+          <h2 id="inspect-entity-name">renderer.ts</h2>
+          <div id="inspect-entity-path" class="entity-path">src/engine/renderer.ts</div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-box">
+            <span class="stat-lbl">CENTRALITY</span>
+            <span id="inspect-centrality" class="stat-val">96.4%</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-lbl">IMPORTANCE</span>
+            <span id="inspect-importance" class="stat-val">0.94</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-lbl">STRUCTURAL RISK</span>
+            <span id="inspect-risk" class="stat-val risk-high">89%</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-lbl">CYCLOMATIC MASS</span>
+            <span id="inspect-complexity" class="stat-val">HIGH (42)</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-lbl">DEPENDENTS (FAN-IN)</span>
+            <span id="inspect-dependents-count" class="stat-val">37</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-lbl">DEPENDENCIES (FAN-OUT)</span>
+            <span id="inspect-dependencies-count" class="stat-val">12</span>
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <h3 class="section-title">KNOWLEDGE STATE</h3>
+          <div class="knowledge-pills">
+            <span id="tag-discovered" class="k-tag active">DISCOVERED ✓</span>
+            <span id="tag-understood" class="k-tag">UNDERSTOOD ✗</span>
+            <span id="tag-mastered" class="k-tag">MASTERED ✗</span>
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <h3 class="section-title">WHAT-IF SIMULATION QUICK TRIGGER</h3>
+          <div class="action-buttons-group">
+            <button id="quick-simulate-failure-btn" class="sim-action-btn danger">SIMULATE FAILURE</button>
+            <button id="quick-simulate-change-btn" class="sim-action-btn warning">SIMULATE CONTRACT CHANGE</button>
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <h3 class="section-title">DIRECT CALLERS / DEPENDENTS (<span id="inspect-callers-count">37</span>)</h3>
+          <ul id="inspect-callers-list" class="entity-link-list"></ul>
+        </div>
+
+        <div class="drawer-section">
+          <h3 class="section-title">OUTGOING DEPENDENCIES (<span id="inspect-deps-count">12</span>)</h3>
+          <ul id="inspect-deps-list" class="entity-link-list"></ul>
+        </div>
+
+        <div class="drawer-section">
+          <h3 class="section-title">ARCHITECTURAL DIAGNOSIS</h3>
+          <div id="inspect-diagnosis-text" class="diagnosis-box">
+            Critical dependency bottleneck. 37 modules rely directly on this entity.
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Overlay Modals / Decks -->
+    <div id="modal-backdrop" class="modal-backdrop hidden"></div>
+
+    <!-- CodeDex Modal -->
+    <section id="codedex-modal" class="deck-modal hidden">
+      <div class="modal-header">
+        <h2>CODEDEX // ENTITY REGISTRY</h2>
+        <div class="codedex-summary-stats">
+          <span>COLLECTED: <strong id="codedex-collected-stat">347 / 568</strong></span>
+          <span>COMPLETION: <strong id="codedex-completion-pct">61%</strong></span>
+        </div>
+        <button class="modal-close-btn" data-close="codedex-modal">✕</button>
+      </div>
+      <div class="codedex-filter-bar">
+        <input type="text" id="codedex-search" placeholder="Filter CodeDex entries...">
+        <div class="rarity-filters">
+          <button class="filter-chip active" data-rarity="all">ALL</button>
+          <button class="filter-chip chip-mythic" data-rarity="mythic">MYTHIC</button>
+          <button class="filter-chip chip-legendary" data-rarity="legendary">LEGENDARY</button>
+          <button class="filter-chip chip-epic" data-rarity="epic">EPIC</button>
+          <button class="filter-chip chip-rare" data-rarity="rare">RARE</button>
+          <button class="filter-chip chip-uncommon" data-rarity="uncommon">UNCOMMON</button>
+          <button class="filter-chip chip-common" data-rarity="common">COMMON</button>
+        </div>
+      </div>
+      <div id="codedex-grid" class="codedex-card-grid"></div>
+    </section>
+
+    <!-- Quests Modal -->
+    <section id="quests-modal" class="deck-modal hidden">
+      <div class="modal-header">
+        <h2>ARCHITECTURE QUESTS // ONBOARDING & BOUNTIES</h2>
+        <span class="quest-xp-indicator">TOTAL REWARDS AVAILABLE: <strong>4,800 XP</strong></span>
+        <button class="modal-close-btn" data-close="quests-modal">✕</button>
+      </div>
+      <div class="quest-tabs">
+        <button class="tab-btn active" data-quest-category="all">ALL QUESTS</button>
+        <button class="tab-btn" data-quest-category="onboarding">ONBOARDING (LEARN THIS REPO)</button>
+        <button class="tab-btn" data-quest-category="detective">CODE DETECTIVE</button>
+        <button class="tab-btn" data-quest-category="daily">DAILY CHALLENGE</button>
+      </div>
+      <div id="quests-list" class="quest-list-container"></div>
+    </section>
+
+    <!-- Threats & Refactor Modal -->
+    <section id="threats-modal" class="deck-modal hidden">
+      <div class="modal-header">
+        <h2>ARCHITECTURAL THREAT ARENA // REFACTOR SIMULATOR</h2>
+        <span class="threat-summary-badge">SYSTEM STABILITY: <strong>62%</strong></span>
+        <button class="modal-close-btn" data-close="threats-modal">✕</button>
+      </div>
+      <div class="threat-arena-layout">
+        <div class="threat-sidebar">
+          <h3>DETECTED ARCHITECTURAL THREATS</h3>
+          <ul id="threats-sidebar-list" class="threat-list"></ul>
+        </div>
+        <div class="threat-detail-arena">
+          <div id="active-threat-dossier" class="threat-dossier">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- What-If Lab Modal -->
+    <section id="whatif-modal" class="deck-modal hidden">
+      <div class="modal-header">
+        <h2>WHAT-IF IMPACT LABORATORY // BLAST RADIUS ENGINE</h2>
+        <button class="modal-close-btn" data-close="whatif-modal">✕</button>
+      </div>
+      <div class="whatif-workspace">
+        <div class="whatif-setup-pane">
+          <h3>HYPOTHESIS SETUP</h3>
+          <div class="field-group">
+            <label for="whatif-target-node">TARGET MODULE / ENTITY</label>
+            <select id="whatif-target-node" class="styled-select"></select>
+          </div>
+          <div class="field-group">
+            <label for="whatif-simulation-type">SIMULATION SCENARIO</label>
+            <select id="whatif-simulation-type" class="styled-select">
+              <option value="failure">Module Deletion / Total Failure</option>
+              <option value="contract_change">Interface / Contract Change</option>
+              <option value="isolate">Subsystem Isolation</option>
+            </select>
+          </div>
+          <button id="run-simulation-btn" class="execute-sim-btn">EXECUTE SIMULATION</button>
+        </div>
+        <div class="whatif-results-pane">
+          <h3>IMPACT TELEMETRY & BLAST RADIUS</h3>
+          <div id="whatif-results-content" class="whatif-results-empty">
+            Select a target entity and click Execute Simulation to propagate architectural consequences.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Time Machine Drawer / Timeline Bar -->
+    <div id="timeline-drawer" class="timeline-bar-dock hidden">
+      <div class="timeline-header">
+        <div class="timeline-meta">
+          <span class="timeline-title">GIT TIME MACHINE // ARCHITECTURAL EVOLUTION</span>
+          <span id="current-commit-hash" class="commit-hash">COMMIT: 8F31A9 (HEAD)</span>
+          <span id="current-commit-date" class="commit-date">2026-08-30</span>
+        </div>
+        <div class="timeline-playback-controls">
+          <button id="timeline-prev-btn" class="t-btn">◄ PREV</button>
+          <button id="timeline-play-btn" class="t-btn highlight">▶ PLAY</button>
+          <button id="timeline-next-btn" class="t-btn">NEXT ►</button>
+          <select id="timeline-speed-select" class="speed-select">
+            <option value="1">1x SPEED</option>
+            <option value="2">2x SPEED</option>
+            <option value="4">4x SPEED</option>
+          </select>
+        </div>
+        <button id="close-timeline-btn" class="close-btn">✕</button>
+      </div>
+      <div class="timeline-slider-track">
+        <input type="range" id="timeline-slider" min="0" max="100" value="100" step="1">
+        <div id="timeline-milestones" class="timeline-milestones"></div>
+      </div>
+      <div class="timeline-summary-strip">
+        <div class="tl-stat">EVOLUTION: <span id="tl-stat-gen">GEN 12 / 12</span></div>
+        <div class="tl-stat">ENTITIES AT COMMIT: <span id="tl-stat-nodes">568</span></div>
+        <div class="tl-stat">CONNECTIONS: <span id="tl-stat-edges">1,520</span></div>
+        <div class="tl-stat">ARCHITECTURAL HEALTH: <span id="tl-stat-health">62%</span></div>
+        <div class="tl-stat note" id="tl-stat-note">Subsystem AI Engine incorporated</div>
+      </div>
+    </div>
+
+    <!-- Title / Initial Splash Screen -->
+    <div id="title-screen" class="title-screen-overlay">
+      <div class="title-card">
+        <div class="terminal-header-strip">
+          <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
+          <span class="term-title">CODEBASE MEMORY // SYSTEM INITIALIZE</span>
+        </div>
+        <div class="title-body">
+          <div class="title-logo-block">
+            <h1 class="glitch-title">CODEBASE MEMORY</h1>
+            <p class="subtitle">A playable interface for understanding software architecture.</p>
+          </div>
+
+          <div class="preset-selector-box">
+            <label for="project-select-dropdown">SELECT CODEBASE UNIVERSE:</label>
+            <select id="project-select-dropdown" class="styled-select project-dropdown">
+              <option value="sketion">SKETION ENGINE (568 entities, 1,520 relations, 7 threats)</option>
+              <option value="router">NEO-API GATEWAY & DISTRIBUTED ROUTER (312 entities, 840 relations)</option>
+              <option value="custom">IMPORT CUSTOM CODEBASE (JSON / AST / DIRECTORY)</option>
+            </select>
+          </div>
+
+          <div id="custom-import-box" class="custom-import-dropzone hidden">
+            <p>Drag & drop graph JSON or AST export here, or click to upload</p>
+            <input type="file" id="custom-file-input" accept=".json,.zip">
+          </div>
+
+          <div class="manifesto-box">
+            <div class="manifesto-line"><span class="prompt">></span> STATUS: SYSTEM READY</div>
+            <div class="manifesto-line"><span class="prompt">></span> PARSER: SEMANTIC GRAPH & AST TOPOLOGY ONLINE</div>
+            <div class="manifesto-line"><span class="prompt">></span> SIMULATION: WHAT-IF IMPACT & BLAST RADIUS LOADED</div>
+            <div class="manifesto-line"><span class="prompt">></span> OBJECTIVE: EXPLORE. UNDERSTAND. REFACTOR. MASTER.</div>
+          </div>
+
+          <button id="enter-world-btn" class="enter-world-cta">
+            [ ENTER WORLD // INITIALIZE SIMULATION ]
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
