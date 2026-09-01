@@ -256,8 +256,24 @@ export class GraphWorld {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Radial Constellation Highway Lines to each Biome
+    // Pre-calculate node counts per biome
+    const biomeNodeCounts = new Map();
+    if (this.graph && this.graph.nodes) {
+      for (const node of this.graph.nodes.values()) {
+        const b = node.biome || 'core';
+        biomeNodeCounts.set(b, (biomeNodeCounts.get(b) || 0) + 1);
+      }
+    }
+
+    // Radial Constellation Highway Lines to each ACTIVE Biome
     for (const sector of Object.values(BIOME_SECTORS)) {
+      const nodeCount = biomeNodeCounts.get(sector.id) || 0;
+      
+      // If the sector is not the central core and has NO nodes, skip rendering conduits and packets
+      if (sector.id !== 'core' && nodeCount === 0) {
+        continue;
+      }
+
       const conf = BIOME_CONFIG[sector.id] || BIOME_CONFIG.core;
       
       // Radial highway conduit
@@ -299,8 +315,9 @@ export class GraphWorld {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Tactical Sector Label Pill
-      const localizedName = i18n.t(`biome_${sector.id}`) || sector.name;
+      // Tactical Sector Label Pill with entity count
+      const rawName = i18n.t(`biome_${sector.id}`) || sector.name;
+      const localizedName = nodeCount > 0 && sector.id !== 'core' ? `${rawName} [${nodeCount}]` : rawName;
       ctx.save();
       ctx.translate(sector.x, sector.y - sector.radius - 24);
       

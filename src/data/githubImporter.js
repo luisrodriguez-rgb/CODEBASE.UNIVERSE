@@ -6,7 +6,6 @@
  */
 
 import { CodeGraph } from '../analysis/graph.js';
-import { UniversalAstParser } from '../indexer/astParser.js';
 import { sfx } from '../audio/soundFX.js';
 import { i18n } from '../i18n/translations.js';
 
@@ -87,7 +86,7 @@ export class GitHubCloudImporter {
       const relPath = fileItem.path;
       const fileName = relPath.split('/').pop();
       const baseName = fileName.replace(/\.[^/.]+$/, '');
-      const biome = UniversalAstParser.classifyBiome(relPath);
+      const biome = this.classifyBiome(relPath);
 
       // Estimate LOC from file size
       const estimatedLoc = Math.max(15, Math.min(2500, Math.round((fileItem.size || 1000) / 38)));
@@ -134,17 +133,17 @@ export class GitHubCloudImporter {
       }
     }
 
-    // Connect core modules to domain subsystems
+    // Inter-district cross linking between core, UI, power, and storage
     const coreNodes = parsedEntities.filter(e => e.biome === 'core');
     const otherNodes = parsedEntities.filter(e => e.biome !== 'core');
 
-    for (const core of coreNodes.slice(0, 4)) {
-      for (let i = 0; i < Math.min(otherNodes.length, 12); i++) {
-        const target = otherNodes[i];
-        const edgeKey = `${core.id}->${target.id}`;
+    for (const oNode of otherNodes) {
+      if (coreNodes.length > 0 && Math.random() > 0.4) {
+        const targetCore = coreNodes[Math.floor(Math.random() * coreNodes.length)];
+        const edgeKey = `${targetCore.id}->${oNode.id}`;
         if (!edgeSet.has(edgeKey)) {
           edgeSet.add(edgeKey);
-          graph.addEdge({ source: core.id, target: target.id, type: 'imports' });
+          graph.addEdge({ source: targetCore.id, target: oNode.id, type: 'calls' });
         }
       }
     }
@@ -152,7 +151,75 @@ export class GitHubCloudImporter {
     return {
       graph,
       projectName: `${owner.toUpperCase()} / ${repo.toUpperCase()}`,
-      totalFiles: parsedEntities.length
+      totalFiles: codeFiles.length
     };
+  }
+
+  /**
+   * Intelligently classifies files into 8 functional biomes based on path, name, and architectural role.
+   */
+  static classifyBiome(path) {
+    const p = path.toLowerCase();
+    const fileName = p.split('/').pop();
+
+    // 1. Hazard Zone (Hotspots, massive files, circularities)
+    if (p.includes('/legacy/') || p.includes('/deprecated/') || p.includes('/hack/') || p.includes('/temp/')) {
+      return 'hazard';
+    }
+
+    // 2. Transmission Hub (API, Network, Workers, Proxies, Webhooks)
+    if (p.includes('/api/') || p.includes('/routes/') || p.includes('/controllers/') || 
+        p.includes('/gateway/') || p.includes('/network/') || p.includes('/http/') ||
+        fileName.includes('worker') || fileName.includes('proxy') || fileName.includes('fetch') ||
+        fileName.includes('client') || fileName.includes('socket') || fileName.includes('stream')) {
+      return 'transmission';
+    }
+
+    // 3. Data Bunker (Storage, DB, Cache, Models, Recorders, Persistence)
+    if (p.includes('/db/') || p.includes('/models/') || p.includes('/storage/') || 
+        p.includes('/cache/') || p.includes('/repository/') || p.includes('/store/') ||
+        fileName.includes('db') || fileName.includes('storage') || fileName.includes('recorder') ||
+        fileName.includes('record') || fileName.includes('persist') || fileName.includes('cache') ||
+        fileName.includes('model') || fileName.includes('schema') || fileName.includes('data')) {
+      return 'bunker';
+    }
+
+    // 4. Power Grid (Audio, Audio Engine, Event Bus, State Management, Actions, Redux)
+    if (p.includes('/events/') || p.includes('/redux/') || p.includes('/emitter/') ||
+        p.includes('/state/') || p.includes('/audio/') || p.includes('/sound/') ||
+        fileName.includes('audio') || fileName.includes('sound') || fileName.includes('event') ||
+        fileName.includes('action') || fileName.includes('emitter') || fileName.includes('bus') ||
+        fileName.includes('signal') || fileName.includes('track') || fileName.includes('music')) {
+      return 'power';
+    }
+
+    // 5. Research Labs (Algorithms, Pathfinding, Math, Parsers, Shaders, Tests)
+    if (p.includes('/test/') || p.includes('/spec/') || p.includes('test.') || p.includes('spec.') ||
+        p.includes('/benchmark/') || p.includes('/algo/') || p.includes('/math/') || p.includes('/physics/') ||
+        fileName.includes('pathfinding') || fileName.includes('algo') || fileName.includes('math') ||
+        fileName.includes('calc') || fileName.includes('physics') || fileName.includes('matrix') ||
+        fileName.includes('parser') || fileName.includes('ast') || fileName.includes('glsl') ||
+        fileName.includes('shader') || fileName.includes('achievement')) {
+      return 'lab';
+    }
+
+    // 6. UI Metropolis (Components, Views, Styles, Templates, Themes, Icons, Pages)
+    if (p.includes('/ui/') || p.includes('/components/') || p.includes('/views/') || 
+        p.includes('/pages/') || p.includes('/styles/') || p.includes('/themes/') ||
+        p.includes('/icons/') || p.includes('/templates/') || p.includes('/layouts/') ||
+        p.endsWith('.tsx') || p.endsWith('.jsx') || p.endsWith('.vue') || p.endsWith('.svelte') ||
+        p.endsWith('.css') || p.endsWith('.scss') || p.endsWith('.html') ||
+        fileName.includes('render') || fileName.includes('view') || fileName.includes('component') ||
+        fileName.includes('template') || fileName.includes('canvas') || fileName.includes('draw')) {
+      return 'ui';
+    }
+
+    // 7. Forgotten Ruins (Configs, docs, dead code, markdown)
+    if (p.endsWith('.md') || p.endsWith('.txt') || p.includes('/docs/') || p.includes('/misc/')) {
+      return 'ruins';
+    }
+
+    // 8. Core Citadel (Entry points, configs, root orchestrators, engine core)
+    return 'core';
   }
 }
