@@ -2,6 +2,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { exec } from 'child_process';
 import { LocalRepositoryScanner } from './src/indexer/localScanner.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,7 +25,7 @@ const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
   const pathname = parsedUrl.pathname;
 
-  // Dynamic Ingestion API endpoint
+  // 1. Dynamic Local Repository Ingestion API
   if (pathname === '/api/scan') {
     const scanPath = parsedUrl.searchParams.get('dir') || __dirname;
     try {
@@ -41,6 +42,39 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // 2. Codebase-Memory-MCP (CBM) Integration API
+  if (pathname === '/api/cbm/projects') {
+    // Try to list projects via CBM CLI
+    exec('codebase-memory-mcp cli list_projects --json', (err, stdout, stderr) => {
+      if (err) {
+        // Fallback: check if ~/.cache/codebase-memory-mcp directory exists
+        const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+        const cbmCache = path.join(homeDir, '.cache', 'codebase-memory-mcp');
+        let projects = [];
+        if (fs.existsSync(cbmCache)) {
+          const files = fs.readdirSync(cbmCache);
+          projects = files.filter(f => f.endsWith('.db')).map(f => ({
+            name: f.replace(/\.db$/, ''),
+            status: 'cached'
+          }));
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ available: projects.length > 0, projects }));
+        return;
+      }
+      try {
+        const data = JSON.parse(stdout);
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ available: true, projects: data.projects || data }));
+      } catch (e) {
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ available: false, projects: [] }));
+      }
+    });
+    return;
+  }
+
+  // 3. Static File Serving
   let reqPath = pathname;
   if (reqPath === '/') reqPath = '/index.html';
 
