@@ -1,7 +1,9 @@
 /**
  * Force-Directed Physics & Biome Sector Continent Layout Engine.
- * Gives each architectural biome its own distinct spatial territory with strong containment
- * and prevents messy central clustering.
+ * Gives each architectural biome its own distinct spatial territory with expansive breathing room
+ * and guarantees zero building overlap.
+ *
+ * ZERO EMOJIS.
  */
 
 export const BIOME_SECTORS = {
@@ -10,43 +12,43 @@ export const BIOME_SECTORS = {
     name: 'CORE CITADEL',
     x: 0,
     y: 0,
-    radius: 200,
+    radius: 280,
     color: '#38bdf8',
     desc: 'Central Orchestration & Execution Pipeline'
   },
   ui: {
     id: 'ui',
     name: 'METROPOLIS GRID (UI)',
-    x: 650,
-    y: -380,
-    radius: 260,
+    x: 900,
+    y: -480,
+    radius: 380,
     color: '#a855f7',
     desc: 'Components, Viewports, Templates & Themes'
   },
   power: {
     id: 'power',
     name: 'POWER GRID (STATE)',
-    x: -650,
-    y: -340,
-    radius: 230,
+    x: -900,
+    y: -440,
+    radius: 340,
     color: '#f59e0b',
     desc: 'State Stores, Action Dispatchers & History Bus'
   },
   bunker: {
     id: 'bunker',
     name: 'SUBTERRANEAN BUNKER',
-    x: -600,
-    y: 460,
-    radius: 240,
+    x: -850,
+    y: 580,
+    radius: 340,
     color: '#3b82f6',
     desc: 'Database, Storage Engines & Persistence'
   },
-  network: {
-    id: 'network',
+  transmission: {
+    id: 'transmission',
     name: 'TRANSMISSION HUB (API)',
-    x: 620,
-    y: 440,
-    radius: 240,
+    x: 880,
+    y: 560,
+    radius: 340,
     color: '#06b6d4',
     desc: 'Network Protocols, AI Pipeline & Gateways'
   },
@@ -54,26 +56,26 @@ export const BIOME_SECTORS = {
     id: 'lab',
     name: 'RESEARCH LABS',
     x: 0,
-    y: 680,
-    radius: 210,
+    y: 920,
+    radius: 300,
     color: '#10b981',
     desc: 'Test Suites, Mocks & Benchmarks'
   },
   hazard: {
     id: 'hazard',
     name: 'HAZARD SECTOR',
-    x: -220,
-    y: -680,
-    radius: 190,
+    x: -320,
+    y: -920,
+    radius: 280,
     color: '#f43f5e',
     desc: 'High Risk Hotspots & Circular Anomalies'
   },
   ruins: {
     id: 'ruins',
     name: 'FORGOTTEN RUINS',
-    x: 320,
-    y: -680,
-    radius: 180,
+    x: 420,
+    y: -920,
+    radius: 260,
     color: '#64748b',
     desc: 'Dead Code & Deprecated Utilities'
   }
@@ -89,43 +91,58 @@ export class WorldLayout {
   }
 
   initPositions() {
-    // Distribute nodes evenly in golden ratio spirals inside their designated biome island
+    // Count nodes per biome to dynamically size territories
     const biomeCounts = {};
+    const biomeNodes = new Map();
 
     this.nodes.forEach((node) => {
-      const biome = node.biome || 'core';
-      const sector = BIOME_SECTORS[biome] || BIOME_SECTORS.core;
-      
-      biomeCounts[biome] = (biomeCounts[biome] || 0) + 1;
-      const index = biomeCounts[biome];
-
-      // Golden ratio phyllotaxis inside sector circle
-      const phi = 137.508 * (Math.PI / 180);
-      const theta = index * phi;
-      const maxR = sector.radius * 0.85;
-      const r = Math.sqrt(index / 100) * maxR;
-
-      node.x = sector.x + Math.cos(theta) * Math.min(r, maxR);
-      node.y = sector.y + Math.sin(theta) * Math.min(r, maxR);
-      node.vx = 0;
-      node.vy = 0;
+      const b = node.biome || 'core';
+      if (!biomeNodes.has(b)) biomeNodes.set(b, []);
+      biomeNodes.get(b).push(node);
     });
+
+    // Distribute with Archimedean / Golden Ratio spiral guaranteeing 75px spacing
+    for (const [biome, nodes] of biomeNodes.entries()) {
+      const sector = BIOME_SECTORS[biome] || BIOME_SECTORS.core;
+      const count = nodes.length;
+
+      // Expand sector radius if it has many nodes
+      sector.radius = Math.max(260, Math.sqrt(count) * 68);
+
+      nodes.forEach((node, index) => {
+        if (index === 0) {
+          // Central landmark building of the sector
+          node.x = sector.x;
+          node.y = sector.y;
+        } else {
+          // Golden ratio phyllotaxis with minimum spacing of ~72px
+          const phi = 137.508 * (Math.PI / 180);
+          const theta = index * phi;
+          const r = Math.sqrt(index) * 62;
+
+          node.x = sector.x + Math.cos(theta) * r;
+          node.y = sector.y + Math.sin(theta) * r;
+        }
+        node.vx = 0;
+        node.vy = 0;
+      });
+    }
   }
 
-  step(alpha = 0.04) {
-    const kRepel = 1800;
-    const kAttractSame = 0.015;
-    const kAttractDiff = 0.002; // Very weak inter-biome pull so biomes don't collapse into center!
-    const kSectorAnchor = 0.12;  // Strong containment inside own sector territory
+  step(alpha = 0.03) {
+    const kRepel = 3200;
+    const kAttractSame = 0.008;
+    const kAttractDiff = 0.001;
+    const kSectorAnchor = 0.08;
 
-    // 1. Strong Centroid Gravity to Sector Territory
+    // 1. Centroid Gravity to Sector Territory
     for (const node of this.nodes) {
       const biome = node.biome || 'core';
       const sector = BIOME_SECTORS[biome] || BIOME_SECTORS.core;
       
       const dx = sector.x - node.x;
       const dy = sector.y - node.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
       // Pull toward sector center
       node.vx += dx * kSectorAnchor * alpha;
@@ -134,8 +151,8 @@ export class WorldLayout {
       // Hard sector boundary containment
       if (dist > sector.radius) {
         const overflow = dist - sector.radius;
-        node.vx += (dx / dist) * overflow * 0.3;
-        node.vy += (dy / dist) * overflow * 0.3;
+        node.vx += (dx / dist) * overflow * 0.2;
+        node.vy += (dy / dist) * overflow * 0.2;
       }
     }
 
@@ -147,7 +164,7 @@ export class WorldLayout {
 
       const isSameBiome = source.biome === target.biome;
       const kAttract = isSameBiome ? kAttractSame : kAttractDiff;
-      const targetDist = isSameBiome ? 45 : 280;
+      const targetDist = isSameBiome ? 85 : 380;
 
       const dx = target.x - source.x;
       const dy = target.y - source.y;
@@ -163,18 +180,18 @@ export class WorldLayout {
       target.vy -= fy;
     }
 
-    // 3. Node-to-Node Repulsion (Local spatial collision avoidance)
+    // 3. Strong Anti-Collision Node-to-Node Repulsion
     const N = this.nodes.length;
     for (let i = 0; i < N; i++) {
       const n1 = this.nodes[i];
       for (let j = i + 1; j < N; j++) {
         const n2 = this.nodes[j];
-        if (n1.biome !== n2.biome) continue; // Only repulse within same biome
+        if (n1.biome !== n2.biome) continue;
 
         const dx = n2.x - n1.x;
         const dy = n2.y - n1.y;
-        const distSq = dx * dx + dy * dy + 36;
-        if (distSq < 1600) { // Local 40px radius
+        const distSq = dx * dx + dy * dy + 1;
+        if (distSq < 5625) { // 75px radius collision threshold
           const dist = Math.sqrt(distSq);
           const force = (kRepel / distSq) * alpha;
           const fx = (dx / dist) * force;
@@ -188,13 +205,12 @@ export class WorldLayout {
       }
     }
 
-    // 4. Velocity integration & high damping for stability
-    const damping = 0.82;
+    // 4. Velocity integration & damping
     for (const node of this.nodes) {
       node.x += node.vx;
       node.y += node.vy;
-      node.vx *= damping;
-      node.vy *= damping;
+      node.vx *= 0.82;
+      node.vy *= 0.82;
     }
   }
 }

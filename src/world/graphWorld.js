@@ -417,9 +417,18 @@ export class GraphWorld {
   renderProceduralArchitectures(ctx, graph, analysis, state, effects, camera) {
     const selectedId = state.selectedNodeId;
     const hoveredId = this.hoveredNodeId;
+    const activeTarget = hoveredId || selectedId;
     const filter = state.activeFilter;
     const search = state.searchQuery;
     const activePathNodes = new Set(this.pathFollower.activePath);
+
+    // Active Connected Subsystem Neighborhood
+    const connectedNeighbors = new Set();
+    if (activeTarget) {
+      connectedNeighbors.add(activeTarget);
+      for (const dep of graph.getDependencies(activeTarget)) connectedNeighbors.add(dep);
+      for (const caller of graph.getDependents(activeTarget)) connectedNeighbors.add(caller);
+    }
 
     // Viewport Frustum Bounds (in World coordinates)
     const halfW = (this.canvas.width / (2 * camera.zoom)) + 140;
@@ -458,6 +467,16 @@ export class GraphWorld {
 
       if (!visible && !isSelected && !isHovered) continue;
 
+      // Contextual Subsystem Focus Dimming
+      ctx.save();
+      if (activeTarget) {
+        if (connectedNeighbors.has(node.id)) {
+          ctx.globalAlpha = 1.0;
+        } else {
+          ctx.globalAlpha = 0.14; // Dim unrelated architecture
+        }
+      }
+
       // Render 2.5D Building Platform & Silhouette
       this.buildings.renderBuilding(ctx, node, stat, {
         zoom: camera.zoom,
@@ -467,6 +486,7 @@ export class GraphWorld {
         isFlowTarget,
         activeMode: this.activeMode
       });
+      ctx.restore();
     }
   }
 

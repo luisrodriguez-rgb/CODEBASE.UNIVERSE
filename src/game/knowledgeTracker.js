@@ -38,6 +38,18 @@ export class KnowledgeTracker {
     return Math.min(100, Math.round((this.discovered.size / this.totalNodesCount) * 100));
   }
 
+  get xp() {
+    return this.totalXP;
+  }
+
+  getCurrentRank() {
+    return this.getRankTitle();
+  }
+
+  getRank() {
+    return this.getRankTitle();
+  }
+
   getRankTitle() {
     if (this.totalXP >= 15000) return 'CODEBASE OVERLORD (LVL 10)';
     if (this.totalXP >= 10000) return 'PRINCIPAL ARCHITECT (LVL 08)';

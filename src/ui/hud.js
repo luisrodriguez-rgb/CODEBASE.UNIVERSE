@@ -17,6 +17,7 @@ export class HudController {
     this.initEvents();
     this.subscribeState();
     this.updateI18nLabels();
+    this.updateTelemetryMetrics();
   }
 
   initElements() {
