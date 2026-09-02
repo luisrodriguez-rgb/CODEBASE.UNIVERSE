@@ -318,14 +318,14 @@ export class GraphWorld {
     ctx.save();
 
     // --- A. Core Citadel Orbital Ring Paths ---
-    const coreRings = [62, 105, 155];
+    const coreRings = [85, 145, 205];
     ctx.setLineDash([4, 8]);
     ctx.lineWidth = 0.8;
     for (let ri = 0; ri < coreRings.length; ri++) {
       const rr = coreRings[ri];
       ctx.strokeStyle = `rgba(56,189,248,${0.18 - ri * 0.04})`;
       ctx.beginPath();
-      ctx.ellipse(0, 0, rr, rr * 0.55, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, rr, rr * 0.58, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
     ctx.setLineDash([]);
@@ -352,9 +352,9 @@ export class GraphWorld {
     const padX = 28, padY = 22;
     minX -= padX; maxX += padX; minY -= padY; maxY += padY;
 
-    // Detect cell size from node spacing (CELL = 56 from layout.js)
-    const CELL = 56;
-    const cols = Math.ceil(Math.sqrt(uiNodes.length * 1.25));
+    // Detect cell size from node spacing (CELL = 64 from layout.js)
+    const CELL = 64;
+    const cols = Math.max(3, Math.ceil(Math.sqrt(uiNodes.length * 1.3)));
 
     // Horizontal streets
     ctx.strokeStyle = 'rgba(168,85,247,0.12)';

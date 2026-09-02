@@ -32,12 +32,13 @@ export const DEPTH_LAYERS = {
 };
 
 export const WORLD_LAYOUT = {
-  core:         { x:    0, y:    0, baseRadius:130, scale:1.00 },
-  ui:           { x:  620, y: -340, baseRadius:180, scale:1.40 },
-  power:        { x: -560, y: -300, baseRadius:160, scale:1.20 },
-  bunker:       { x: -500, y:  380, baseRadius:150, scale:1.15 },
-  transmission: { x:  560, y:  360, baseRadius:150, scale:1.15 },
-  lab:          { x:   80, y: -580, baseRadius:110, scale:0.85 },
-  hazard:       { x:  760, y: -500, baseRadius:100, scale:0.80 },
-  ruins:        { x: -680, y:  520, baseRadius: 90, scale:0.70 },
+  core:         { x:    0, y:    0, baseRadius: 160, scale: 1.00 },
+  power:        { x: -740, y: -240, baseRadius: 160, scale: 1.20 },
+  lab:          { x: -140, y: -720, baseRadius: 130, scale: 0.85 },
+  hazard:       { x:  680, y: -700, baseRadius: 140, scale: 0.80 },
+  ui:           { x:  780, y: -120, baseRadius: 200, scale: 1.40 },
+  transmission: { x:  660, y:  480, baseRadius: 160, scale: 1.15 },
+  ruins:        { x:  -40, y:  740, baseRadius: 120, scale: 0.70 },
+  bunker:       { x: -680, y:  460, baseRadius: 160, scale: 1.15 },
 };
+

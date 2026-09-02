@@ -77,25 +77,20 @@ export class WorldLayout {
 
       if (count === 0) { sector.radius = 0; continue; }
 
-      const dynamicR = Math.sqrt(count) * 34 + 20;
-      sector.radius  = Math.max(wl ? wl.baseRadius : 90, dynamicR);
-
       if (sector.id === 'core') {
         // ── CORE CITADEL: Concentric rings sorted by centrality ──────────────
-        // Architecturally: most central nodes orbit closest to the spire,
-        // forming InnerRing / MiddleRing / OuterRing.
         const sorted = [...nodes].sort((a, b) => {
           const sa = this.nodeStats.get(a.id);
           const sb = this.nodeStats.get(b.id);
           return ((sb?.centralityPct || 0) - (sa?.centralityPct || 0));
         });
 
-        // Ring definitions — fixed radii so rings are always distinct
+        // Ring definitions — spacious radii so buildings on different rings never collide
         const rings = [
           { max:  1, r:  0   },   // [0]    Central spire node
-          { max:  7, r:  62  },   // [1-7]  Inner ring
-          { max: 20, r:  105 },   // [8-20] Middle ring
-          { max: Infinity, r: 155 },  // [21+] Outer ring
+          { max:  7, r:  85  },   // [1-7]  Inner ring (generous 85px radius)
+          { max: 20, r: 145 },   // [8-20] Middle ring (145px radius)
+          { max: Infinity, r: 205 },  // [21+] Outer ring (205px radius)
         ];
 
         sorted.forEach((node, i) => {
@@ -115,41 +110,43 @@ export class WorldLayout {
             const ringCount = ring.max === Infinity ? count - prev : ring.max - prev;
             const angle = ((i - prev) / ringCount) * Math.PI * 2 - Math.PI / 2;
             node.x = sector.x + Math.cos(angle) * ring.r;
-            node.y = sector.y + Math.sin(angle) * ring.r * 0.55; // slight ellipse for perspective
+            node.y = sector.y + Math.sin(angle) * ring.r * 0.58; // perspective ellipse
           }
+          node.anchorX = node.x;
+          node.anchorY = node.y;
           node.vx = 0; node.vy = 0;
         });
 
+        sector.radius = Math.max(wl ? wl.baseRadius : 160, count > 20 ? 230 : count > 7 ? 170 : 130);
+
       } else if (sector.id === 'ui') {
-        // ── UI METROPOLIS: City-block grid (streets between buildings) ────────
-        // Most central/important nodes go to the center of the grid (like downtown).
+        // ── UI METROPOLIS: City-block grid with distinct street gaps ──────────
         const sorted = [...nodes].sort((a, b) => {
           const sa = this.nodeStats.get(a.id);
           const sb = this.nodeStats.get(b.id);
           return ((sb?.centralityPct || 0) - (sa?.centralityPct || 0));
         });
 
-        const CELL = 56;  // pixels per grid cell (building + street gap)
-        const cols = Math.ceil(Math.sqrt(count * 1.25));
+        const CELL = 64;  // pixels per grid cell (generous street gap between buildings)
+        const cols = Math.max(3, Math.ceil(Math.sqrt(count * 1.3)));
         const rows = Math.ceil(count / cols);
         const gridW = cols * CELL;
         const gridH = rows * CELL;
 
         sorted.forEach((node, i) => {
-          // Spiral-out from center of grid so important nodes are central
           const col = i % cols;
           const row = Math.floor(i / cols);
           node.x = sector.x - gridW / 2 + col * CELL + CELL / 2;
           node.y = sector.y - gridH / 2 + row * CELL + CELL / 2;
+          node.anchorX = node.x;
+          node.anchorY = node.y;
           node.vx = 0; node.vy = 0;
         });
 
-        // Update sector radius to match actual grid footprint
-        sector.radius = Math.max(sector.radius, Math.max(gridW, gridH) / 2 + 40);
+        sector.radius = Math.max(wl ? wl.baseRadius : 200, Math.sqrt(gridW * gridW + gridH * gridH) / 2 + 45);
 
       } else {
-        // ── ALL OTHER BIOMES: Tight Golden-Ratio phyllotaxis ─────────────────
-        // Sort by importance descending so the center building is the most important
+        // ── ALL OTHER BIOMES: Golden-Ratio phyllotaxis with generous spacing ──
         const sorted = [...nodes].sort((a, b) => {
           const sa = this.nodeStats.get(a.id);
           const sb = this.nodeStats.get(b.id);
@@ -157,7 +154,7 @@ export class WorldLayout {
         });
 
         const PHI = 137.508 * (Math.PI / 180);
-        const SPACING = sector.id === 'hazard' ? 42 : 36;
+        const SPACING = sector.id === 'hazard' ? 52 : 46;
 
         sorted.forEach((node, index) => {
           if (index === 0) {
@@ -165,83 +162,90 @@ export class WorldLayout {
             node.y = sector.y;
           } else {
             const theta = index * PHI;
-            const r     = Math.sqrt(index) * SPACING;
+            const r     = Math.sqrt(index) * SPACING + 24; // +24 gives clearance from center spire
             node.x = sector.x + Math.cos(theta) * r;
-            node.y = sector.y + Math.sin(theta) * r * 0.75; // slight squish for perspective
+            node.y = sector.y + Math.sin(theta) * r * 0.72; // perspective squish
           }
+          node.anchorX = node.x;
+          node.anchorY = node.y;
           node.vx = 0; node.vy = 0;
         });
+
+        const dynamicR = Math.sqrt(count) * SPACING + 50;
+        sector.radius = Math.max(wl ? wl.baseRadius : 140, dynamicR);
       }
     }
   }
 
   step(alpha = 0.03) {
-    const kRepel = 3200;
-    const kAttractSame = 0.008;
-    const kAttractDiff = 0.001;
-    const kSectorAnchor = 0.08;
+    const kAnchor = 0.22;
+    const kRepel = 2800;
+    const kAttractSame = 0.002;
 
-    // 1. Centroid Gravity to Sector Territory
+    // 1. Anchor Restoration & Sector Gravity
     for (const node of this.nodes) {
       const biome = node.biome || 'core';
       const sector = BIOME_SECTORS[biome] || BIOME_SECTORS.core;
       
-      const dx = sector.x - node.x;
-      const dy = sector.y - node.y;
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-
-      // Pull toward sector center
-      node.vx += dx * kSectorAnchor * alpha;
-      node.vy += dy * kSectorAnchor * alpha;
+      // Pull toward designated procedural anchor
+      if (node.anchorX !== undefined && node.anchorY !== undefined) {
+        node.vx += (node.anchorX - node.x) * kAnchor * alpha;
+        node.vy += (node.anchorY - node.y) * kAnchor * alpha;
+      }
 
       // Hard sector boundary containment
-      if (dist > sector.radius) {
-        const overflow = dist - sector.radius;
-        node.vx += (dx / dist) * overflow * 0.2;
-        node.vy += (dy / dist) * overflow * 0.2;
+      const dx = node.x - sector.x;
+      const dy = node.y - sector.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const maxR = sector.radius - 12;
+      if (dist > maxR && maxR > 0) {
+        const overflow = dist - maxR;
+        node.vx -= (dx / dist) * overflow * 0.25;
+        node.vy -= (dy / dist) * overflow * 0.25;
       }
     }
 
-    // 2. Intra-Sector & Inter-Sector Edge Tension
+    // 2. Intra-Sector Soft Edge Tension (Same biome only — NEVER drag across biomes)
     for (const edge of this.edges) {
       const source = this.graph.getNode(edge.source);
       const target = this.graph.getNode(edge.target);
       if (!source || !target) continue;
 
-      const isSameBiome = source.biome === target.biome;
-      const kAttract = isSameBiome ? kAttractSame : kAttractDiff;
-      const targetDist = isSameBiome ? 85 : 380;
+      if (source.biome === target.biome) {
+        const targetDist = 95;
+        const dx = target.x - source.x;
+        const dy = target.y - source.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const force = (dist - targetDist) * kAttractSame * alpha;
 
-      const dx = target.x - source.x;
-      const dy = target.y - source.y;
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      const force = (dist - targetDist) * kAttract * alpha;
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
 
-      const fx = (dx / dist) * force;
-      const fy = (dy / dist) * force;
-
-      source.vx += fx;
-      source.vy += fy;
-      target.vx -= fx;
-      target.vy -= fy;
+        source.vx += fx;
+        source.vy += fy;
+        target.vx -= fx;
+        target.vy -= fy;
+      }
     }
 
-    // 3. Strong Anti-Collision Node-to-Node Repulsion
+    // 3. Strict Universal Anti-Collision Repulsion (Across all nodes and biomes)
     const N = this.nodes.length;
     for (let i = 0; i < N; i++) {
       const n1 = this.nodes[i];
       for (let j = i + 1; j < N; j++) {
         const n2 = this.nodes[j];
-        if (n1.biome !== n2.biome) continue;
-
         const dx = n2.x - n1.x;
         const dy = n2.y - n1.y;
-        const distSq = dx * dx + dy * dy + 1;
-        if (distSq < 5625) { // 75px radius collision threshold
+        const distSq = dx * dx + dy * dy + 0.1;
+        const minDist = (n1.biome === n2.biome) ? 48 : 72;
+        const minDistSq = minDist * minDist;
+
+        if (distSq < minDistSq) {
           const dist = Math.sqrt(distSq);
-          const force = (kRepel / distSq) * alpha;
-          const fx = (dx / dist) * force;
-          const fy = (dy / dist) * force;
+          const overlap = minDist - dist;
+          const force = (overlap / dist) * 1.8 * alpha * 10;
+          const fx = dx * force;
+          const fy = dy * force;
 
           n1.vx -= fx;
           n1.vy -= fy;
@@ -251,12 +255,27 @@ export class WorldLayout {
       }
     }
 
-    // 4. Velocity integration & damping
+    // 4. Velocity integration, damping & hard position clamping
     for (const node of this.nodes) {
       node.x += node.vx;
       node.y += node.vy;
-      node.vx *= 0.82;
-      node.vy *= 0.82;
+      node.vx *= 0.75;
+      node.vy *= 0.75;
+
+      // Hard containment clamping to sector disk
+      const biome = node.biome || 'core';
+      const sector = BIOME_SECTORS[biome] || BIOME_SECTORS.core;
+      const dx = node.x - sector.x;
+      const dy = node.y - sector.y;
+      const maxR = sector.radius - 10;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > maxR && maxR > 0) {
+        node.x = sector.x + (dx / dist) * maxR;
+        node.y = sector.y + (dy / dist) * maxR;
+        node.vx = 0;
+        node.vy = 0;
+      }
     }
   }
 }
+
