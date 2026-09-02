@@ -18,7 +18,7 @@
 >
 > *From static code repositories to playable architectural intelligence, real-time cascade simulations, and temporal Git evolution.*
 
-![CODEBASE.UNIVERSE Isometric City Layout](assets/isometric_layout_v2.png)
+![CODEBASE.UNIVERSE Isometric City Layout](assets/isometric_layout_v2.jpg)
 
 ---
 
