@@ -5,8 +5,8 @@
  * ZERO EMOJIS.
  */
 
-import { BIOME_CONFIG, RARITY_CONFIG } from '../analysis/types.js';
 import { BIOME_VISUAL, SCALE_RULES } from './visualLanguage.js';
+
 
 // ---------------------------------------------------------------------------
 // Helpers

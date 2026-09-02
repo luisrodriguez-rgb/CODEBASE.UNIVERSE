@@ -14,7 +14,7 @@ import { ProceduralBuildingRenderer } from './proceduralBuildings.js';
 import { PathFollower } from './pathFollower.js';
 import { BIOME_CONFIG, RARITY_CONFIG } from '../analysis/types.js';
 import { i18n } from '../i18n/translations.js';
-import { BIOME_VISUAL } from './visualLanguage.js';
+
 
 export class GraphWorld {
   constructor(canvas, minimapCanvas, graph, analysis, state) {
@@ -297,7 +297,7 @@ export class GraphWorld {
     // ─── CORE CITADEL — Hero Monument (Sprint 1) ───────────────────────────
     const t = this.time;
     const pulse  = Math.sin(t * 2.2);
-    const pulse2 = Math.sin(t * 1.6 + 1.2);
+
 
     // Layer 1: Deep radial glow — fills the core territory
     const outerGlow = ctx.createRadialGradient(0, 0, 20, 0, 0, 260);
