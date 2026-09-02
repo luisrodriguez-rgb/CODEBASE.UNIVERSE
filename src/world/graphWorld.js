@@ -345,7 +345,7 @@ export class GraphWorld {
       ctx.translate(sector.x, sector.y - sectorRadius - 28);
 
       // Invariant scale compensation so cards NEVER shrink into unreadable micro-dots when zoomed out!
-      const zoomCompensation = Math.min(2.2, Math.max(1.0, 0.75 / camera.zoom));
+      const zoomCompensation = Math.min(2.2, Math.max(1.0, 0.75 / this.camera.zoom));
       ctx.scale(zoomCompensation, zoomCompensation);
 
       // Measure exact text widths to dynamically size the card (No text cutoff or overflow!)
