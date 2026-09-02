@@ -14,6 +14,7 @@ import { ProceduralBuildingRenderer } from './proceduralBuildings.js';
 import { PathFollower } from './pathFollower.js';
 import { BIOME_CONFIG, RARITY_CONFIG } from '../analysis/types.js';
 import { i18n } from '../i18n/translations.js';
+import { BIOME_VISUAL } from './visualLanguage.js';
 
 export class GraphWorld {
   constructor(canvas, minimapCanvas, graph, analysis, state) {
@@ -39,6 +40,10 @@ export class GraphWorld {
     this.time = 0;
 
     this.activeMode = 'world'; // 'world', 'threats', 'quests', 'simulation'
+
+    // Star field seeds (deterministic procedural, stable across frames)
+    this._starsFar  = this._buildStarField(220, 2687);
+    this._starsNear = this._buildStarField(80, 5231);
 
     this.initCanvasSize();
     this.initInteractions();
@@ -194,67 +199,232 @@ export class GraphWorld {
     this.renderScreenSpaceHUD(ctx, width, height);
   }
 
+  // ─── Star field seed builder ──────────────────────────────────────────────
+  _buildStarField(count, seed) {
+    const stars = [];
+    let s = seed;
+    const rng = () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        nx: rng(),         // normalised [0,1] screen position
+        ny: rng(),
+        r:  0.5 + rng() * 1.2,
+        a:  0.3 + rng() * 0.6,
+        tw: rng() * Math.PI * 2,  // twinkle phase
+        ts: 0.6 + rng() * 1.6,   // twinkle speed
+      });
+    }
+    return stars;
+  }
+
   renderSpaceBackground(ctx, width, height, camera) {
-    ctx.fillStyle = '#040711';
+    // 1. Deep-space gradient base
+    const bg = ctx.createRadialGradient(width * 0.5, height * 0.5, 0, width * 0.5, height * 0.5, Math.max(width, height) * 0.75);
+    bg.addColorStop(0,   '#060c1e');
+    bg.addColorStop(0.5, '#040a18');
+    bg.addColorStop(1,   '#020609');
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, width, height);
 
-    ctx.save();
-    ctx.strokeStyle = 'rgba(30, 41, 59, 0.22)';
-    ctx.lineWidth = 1;
+    // 2. Nebula cloud (two offset radial gradients, very subtle)
+    const nbX = width * 0.35 + camera.x * 0.02;
+    const nbY = height * 0.42 + camera.y * 0.02;
+    const neb = ctx.createRadialGradient(nbX, nbY, 0, nbX, nbY, width * 0.55);
+    neb.addColorStop(0,   'rgba(56,28,120,0.10)');
+    neb.addColorStop(0.4, 'rgba(14,50,100,0.08)');
+    neb.addColorStop(1,   'transparent');
+    ctx.fillStyle = neb;
+    ctx.fillRect(0, 0, width, height);
 
-    const gridSize = 65 * camera.zoom;
+    const nb2X = width * 0.68 + camera.x * 0.03;
+    const nb2Y = height * 0.60 + camera.y * 0.03;
+    const neb2 = ctx.createRadialGradient(nb2X, nb2Y, 0, nb2X, nb2Y, width * 0.40);
+    neb2.addColorStop(0,   'rgba(5,80,90,0.07)');
+    neb2.addColorStop(1,   'transparent');
+    ctx.fillStyle = neb2;
+    ctx.fillRect(0, 0, width, height);
+
+    // 3. Far star field — slow parallax 0.04x
+    for (const st of this._starsFar) {
+      const px = (st.nx * width  + camera.x * 0.04) % width;
+      const py = (st.ny * height + camera.y * 0.04) % height;
+      const twinkle = 0.7 + 0.3 * Math.sin(this.time * st.ts + st.tw);
+      ctx.fillStyle = `rgba(180,210,255,${st.a * twinkle})`;
+      ctx.beginPath();
+      ctx.arc(px < 0 ? px + width : px, py < 0 ? py + height : py, st.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 4. Near star field — medium parallax 0.10x
+    for (const st of this._starsNear) {
+      const px = (st.nx * width  + camera.x * 0.10) % width;
+      const py = (st.ny * height + camera.y * 0.10) % height;
+      const twinkle = 0.6 + 0.4 * Math.sin(this.time * st.ts * 1.4 + st.tw);
+      ctx.fillStyle = `rgba(220,235,255,${st.a * twinkle})`;
+      ctx.beginPath();
+      ctx.arc(px < 0 ? px + width : px, py < 0 ? py + height : py, st.r * 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 5. Holographic grid — world-space (parallax 1.0x), very subtle at edges
+    ctx.save();
+    const gridSize = 68 * camera.zoom;
     const offsetX = (width / 2 + camera.x * camera.zoom) % gridSize;
     const offsetY = (height / 2 + camera.y * camera.zoom) % gridSize;
+    const cx = width / 2, cy = height / 2;
 
+    ctx.strokeStyle = 'rgba(30,50,80,0.18)';
+    ctx.lineWidth = 1;
     ctx.beginPath();
     for (let x = offsetX; x < width; x += gridSize) {
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
+      const d = Math.abs(x - cx) / (width * 0.5);
+      ctx.globalAlpha = Math.max(0, 0.20 - d * 0.18);
+      ctx.moveTo(x, 0); ctx.lineTo(x, height);
     }
     for (let y = offsetY; y < height; y += gridSize) {
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
+      const d = Math.abs(y - cy) / (height * 0.5);
+      ctx.globalAlpha = Math.max(0, 0.20 - d * 0.18);
+      ctx.moveTo(0, y); ctx.lineTo(width, y);
     }
     ctx.stroke();
+    ctx.globalAlpha = 1;
     ctx.restore();
   }
 
   renderBiomeTerritories(ctx) {
     ctx.save();
 
-    // --- CENTRAL CORE NEXUS SUN (The Heart of the Universe) ---
-    const pulse = Math.sin(this.time * 2.2);
-    const sunGlow = ctx.createRadialGradient(0, 0, 10, 0, 0, 240);
-    sunGlow.addColorStop(0, 'rgba(251, 191, 36, 0.35)');
-    sunGlow.addColorStop(0.3, 'rgba(56, 189, 248, 0.15)');
-    sunGlow.addColorStop(0.7, 'rgba(56, 189, 248, 0.04)');
-    sunGlow.addColorStop(1, 'transparent');
+    // ─── CORE CITADEL — Hero Monument (Sprint 1) ───────────────────────────
+    const t = this.time;
+    const pulse  = Math.sin(t * 2.2);
+    const pulse2 = Math.sin(t * 1.6 + 1.2);
 
-    ctx.fillStyle = sunGlow;
-    ctx.beginPath();
-    ctx.arc(0, 0, 240, 0, Math.PI * 2);
-    ctx.fill();
+    // Layer 1: Deep radial glow — fills the core territory
+    const outerGlow = ctx.createRadialGradient(0, 0, 20, 0, 0, 260);
+    outerGlow.addColorStop(0,   'rgba(251,191,36,0.28)');
+    outerGlow.addColorStop(0.3, 'rgba(56,189,248,0.14)');
+    outerGlow.addColorStop(0.7, 'rgba(56,189,248,0.04)');
+    outerGlow.addColorStop(1,   'transparent');
+    ctx.fillStyle = outerGlow;
+    ctx.beginPath(); ctx.arc(0, 0, 260, 0, Math.PI * 2); ctx.fill();
 
-    // Central Sun Core Orb
-    ctx.fillStyle = 'rgba(251, 191, 36, 0.9)';
+    // Layer 2: Ground platform — octagonal illuminated pad
+    ctx.save();
+    ctx.fillStyle   = 'rgba(14,22,50,0.88)';
+    ctx.strokeStyle = 'rgba(251,191,36,0.50)';
+    ctx.lineWidth   = 1.5;
     ctx.beginPath();
-    ctx.arc(0, 0, 12 + pulse * 2, 0, Math.PI * 2);
-    ctx.fill();
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+      const r = 52 + pulse * 1.5;
+      if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+      else         ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
 
-    // Rotating Astronomical Constellation Grid Rings
-    ctx.strokeStyle = 'rgba(251, 191, 36, 0.25)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 8]);
-    ctx.beginPath();
-    ctx.arc(0, 0, 90, 0, Math.PI * 2);
-    ctx.stroke();
+    // Layer 3: Three rotating energy rings
+    const ringData = [
+      { r: 68,  speed: 0.30, dash: [5,9],  color: 'rgba(251,191,36,0.35)' },
+      { r: 88,  speed: -0.20, dash: [8,12], color: 'rgba(56,189,248,0.25)' },
+      { r: 112, speed: 0.12, dash: [3,14], color: 'rgba(168,85,247,0.18)' },
+    ];
+    for (const ring of ringData) {
+      ctx.save();
+      ctx.rotate(t * ring.speed);
+      ctx.strokeStyle = ring.color;
+      ctx.lineWidth   = 1;
+      ctx.setLineDash(ring.dash);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, ring.r, ring.r * 0.52, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
 
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
-    ctx.setLineDash([8, 14]);
+    // Layer 4: Four orbiting satellite structures at r=130
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2 + t * 0.14;
+      const sx = Math.cos(angle) * 130;
+      const sy = Math.sin(angle) * 130 * 0.52;
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.fillStyle   = 'rgba(56,189,248,0.80)';
+      ctx.strokeStyle = 'rgba(56,189,248,0.40)';
+      ctx.lineWidth   = 0.8;
+      // Diamond satellite
+      ctx.beginPath();
+      ctx.moveTo(0, -5); ctx.lineTo(4, 0); ctx.lineTo(0, 5); ctx.lineTo(-4, 0);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      // Connector line to center
+      ctx.strokeStyle = 'rgba(56,189,248,0.15)';
+      ctx.lineWidth   = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(0, 0); ctx.lineTo(-sx, -sy);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Layer 5: Central Tower — stepped golden spire
+    // Base tier
+    ctx.save();
+    ctx.fillStyle   = 'rgba(251,191,36,0.20)';
+    ctx.strokeStyle = 'rgba(251,191,36,0.80)';
+    ctx.lineWidth   = 1.2;
+    // Left face
     ctx.beginPath();
-    ctx.arc(0, 0, 380, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.moveTo(-18, 0); ctx.lineTo(0, 8); ctx.lineTo(0, -22); ctx.lineTo(-18, -22);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // Right face
+    ctx.fillStyle = 'rgba(251,191,36,0.12)';
+    ctx.beginPath();
+    ctx.moveTo(0, 8); ctx.lineTo(18, 0); ctx.lineTo(18, -22); ctx.lineTo(0, -22);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // Mid tier
+    ctx.fillStyle   = 'rgba(56,189,248,0.22)';
+    ctx.strokeStyle = 'rgba(56,189,248,0.70)';
+    ctx.beginPath();
+    ctx.moveTo(-11, -22); ctx.lineTo(0, -17); ctx.lineTo(0, -52); ctx.lineTo(-11, -52);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(56,189,248,0.12)';
+    ctx.beginPath();
+    ctx.moveTo(0, -17); ctx.lineTo(11, -22); ctx.lineTo(11, -52); ctx.lineTo(0, -52);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // Spire
+    ctx.strokeStyle = 'rgba(255,255,255,0.90)';
+    ctx.lineWidth   = 2;
+    ctx.beginPath(); ctx.moveTo(0, -52); ctx.lineTo(0, -90); ctx.stroke();
+    // Vertical light beam
+    const beam = ctx.createLinearGradient(0, -90, 0, -260);
+    beam.addColorStop(0,   'rgba(251,191,36,0.55)');
+    beam.addColorStop(0.5, 'rgba(56,189,248,0.15)');
+    beam.addColorStop(1,   'transparent');
+    ctx.fillStyle = beam;
+    ctx.beginPath();
+    ctx.moveTo(-3, -90); ctx.lineTo(3, -90);
+    ctx.lineTo(10, -260); ctx.lineTo(-10, -260);
+    ctx.closePath(); ctx.fill();
+    // Pulsing tip beacon
+    const bPulse = 1 + Math.sin(t * 5.0) * 0.4;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(0, -90, 3.5 * bPulse, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // Layer 6: Radial starburst lines from origin
+    ctx.save();
+    ctx.strokeStyle = 'rgba(251,191,36,0.12)';
+    ctx.lineWidth   = 1;
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2 + t * 0.04;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 55, Math.sin(a) * 55);
+      ctx.lineTo(Math.cos(a) * 200, Math.sin(a) * 200);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+
 
     // Pre-calculate node counts per biome
     const biomeNodeCounts = new Map();
@@ -275,7 +445,8 @@ export class GraphWorld {
       }
 
       const conf = BIOME_CONFIG[sector.id] || BIOME_CONFIG.core;
-      const sectorRadius = Math.max(90, Math.sqrt(nodeCount) * 38 + 25);
+      const sectorRadius = sector.radius;
+
       
       // Radial highway conduit
       if (sector.id !== 'core') {

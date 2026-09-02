@@ -6,83 +6,54 @@
  * ZERO EMOJIS.
  */
 
+import { WORLD_LAYOUT } from './visualLanguage.js';
+
 export const BIOME_SECTORS = {
   core: {
-    id: 'core',
-    name: 'CORE CITADEL',
-    x: 0,
-    y: 0,
-    radius: 180,
-    color: '#38bdf8',
-    desc: 'Central Orchestration & Execution Pipeline'
+    id: 'core', name: 'CORE CITADEL',
+    x: WORLD_LAYOUT.core.x, y: WORLD_LAYOUT.core.y, radius: WORLD_LAYOUT.core.baseRadius,
+    color: '#38bdf8', desc: 'Central Orchestration & Execution Pipeline'
   },
   ui: {
-    id: 'ui',
-    name: 'METROPOLIS GRID (UI)',
-    x: 480,
-    y: -280,
-    radius: 200,
-    color: '#a855f7',
-    desc: 'Components, Viewports, Templates & Themes'
+    id: 'ui', name: 'UI METROPOLIS',
+    x: WORLD_LAYOUT.ui.x, y: WORLD_LAYOUT.ui.y, radius: WORLD_LAYOUT.ui.baseRadius,
+    color: '#a855f7', desc: 'Components, Viewports, Templates & Themes'
   },
   power: {
-    id: 'power',
-    name: 'POWER GRID (STATE)',
-    x: -480,
-    y: -260,
-    radius: 190,
-    color: '#f59e0b',
-    desc: 'State Stores, Action Dispatchers & History Bus'
+    id: 'power', name: 'POWER GRID',
+    x: WORLD_LAYOUT.power.x, y: WORLD_LAYOUT.power.y, radius: WORLD_LAYOUT.power.baseRadius,
+    color: '#f59e0b', desc: 'State Stores, Action Dispatchers & History Bus'
   },
   bunker: {
-    id: 'bunker',
-    name: 'SUBTERRANEAN BUNKER',
-    x: -460,
-    y: 340,
-    radius: 190,
-    color: '#3b82f6',
-    desc: 'Database, Storage Engines & Persistence'
+    id: 'bunker', name: 'STORAGE BUNKER',
+    x: WORLD_LAYOUT.bunker.x, y: WORLD_LAYOUT.bunker.y, radius: WORLD_LAYOUT.bunker.baseRadius,
+    color: '#3b82f6', desc: 'Database, Storage Engines & Persistence'
   },
   transmission: {
-    id: 'transmission',
-    name: 'TRANSMISSION HUB (API)',
-    x: 480,
-    y: 320,
-    radius: 190,
-    color: '#06b6d4',
-    desc: 'Network Protocols, AI Pipeline & Gateways'
+    id: 'transmission', name: 'API HUB',
+    x: WORLD_LAYOUT.transmission.x, y: WORLD_LAYOUT.transmission.y, radius: WORLD_LAYOUT.transmission.baseRadius,
+    color: '#06b6d4', desc: 'Network Protocols, AI Pipeline & Gateways'
   },
   lab: {
-    id: 'lab',
-    name: 'RESEARCH LABS',
-    x: 0,
-    y: 500,
-    radius: 180,
-    color: '#10b981',
-    desc: 'Test Suites, Mocks & Benchmarks'
+    id: 'lab', name: 'RESEARCH LABS',
+    x: WORLD_LAYOUT.lab.x, y: WORLD_LAYOUT.lab.y, radius: WORLD_LAYOUT.lab.baseRadius,
+    color: '#10b981', desc: 'Test Suites, Mocks & Benchmarks'
   },
   hazard: {
-    id: 'hazard',
-    name: 'HAZARD SECTOR',
-    x: -240,
-    y: -500,
-    radius: 160,
-    color: '#f43f5e',
-    desc: 'High Risk Hotspots & Circular Anomalies'
+    id: 'hazard', name: 'HAZARD ZONE',
+    x: WORLD_LAYOUT.hazard.x, y: WORLD_LAYOUT.hazard.y, radius: WORLD_LAYOUT.hazard.baseRadius,
+    color: '#f43f5e', desc: 'High Risk Hotspots & Circular Anomalies'
   },
   ruins: {
-    id: 'ruins',
-    name: 'FORGOTTEN RUINS',
-    x: 240,
-    y: -500,
-    radius: 150,
-    color: '#64748b',
-    desc: 'Dead Code & Deprecated Utilities'
+    id: 'ruins', name: 'FORGOTTEN RUINS',
+    x: WORLD_LAYOUT.ruins.x, y: WORLD_LAYOUT.ruins.y, radius: WORLD_LAYOUT.ruins.baseRadius,
+    color: '#64748b', desc: 'Dead Code & Deprecated Utilities'
   }
 };
 
 export class WorldLayout {
   constructor(graph, nodeStats) {
+
     this.graph = graph;
     this.nodeStats = nodeStats;
     this.nodes = Array.from(graph.nodes.values());
@@ -100,13 +71,15 @@ export class WorldLayout {
       biomeNodes.get(b).push(node);
     });
 
-    // Distribute with Archimedean / Golden Ratio spiral with compact harmonious spacing
+    // Distribute with Golden Ratio phyllotaxis within intentional sector bounds
     for (const sector of Object.values(BIOME_SECTORS)) {
       const nodes = biomeNodes.get(sector.id) || [];
       const count = nodes.length;
+      const wl = WORLD_LAYOUT[sector.id];
 
-      // Dynamic radius strictly adapted to actual node count
-      sector.radius = count === 0 ? 0 : Math.max(90, Math.sqrt(count) * 38 + 25);
+      // Dynamic radius: grows with node count but never below the designed baseRadius
+      const dynamicR = count === 0 ? 0 : Math.sqrt(count) * 34 + 20;
+      sector.radius = count === 0 ? 0 : Math.max(wl ? wl.baseRadius : 90, dynamicR);
 
       nodes.forEach((node, index) => {
         if (index === 0) {
@@ -114,10 +87,10 @@ export class WorldLayout {
           node.x = sector.x;
           node.y = sector.y;
         } else {
-          // Golden ratio phyllotaxis with tight spacing
+          // Golden ratio phyllotaxis — tight enough to look urban, loose enough to be readable
           const phi = 137.508 * (Math.PI / 180);
           const theta = index * phi;
-          const r = Math.sqrt(index) * 44;
+          const r = Math.sqrt(index) * 38;
 
           node.x = sector.x + Math.cos(theta) * r;
           node.y = sector.y + Math.sin(theta) * r;
