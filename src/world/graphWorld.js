@@ -167,41 +167,56 @@ export class GraphWorld {
   }
 
   render() {
-    const { ctx, camera, graph, analysis, state, effects } = this;
-    const width = this.displayWidth || this.canvas.width;
-    const height = this.displayHeight || this.canvas.height;
+    try {
+      const { ctx, camera, graph, analysis, state, effects } = this;
+      const width = this.displayWidth || this.canvas.width;
+      const height = this.displayHeight || this.canvas.height;
 
-    // 1. Deep Space Holographic Grid Background
-    this.renderSpaceBackground(ctx, width, height, camera);
+      // 1. Deep Space Holographic Grid Background
+      this.renderSpaceBackground(ctx, width, height, camera);
 
-    ctx.save();
-    ctx.translate(width / 2 + camera.x * camera.zoom, height / 2 + camera.y * camera.zoom);
-    ctx.scale(camera.zoom, camera.zoom);
+      ctx.save();
+      ctx.translate(width / 2 + camera.x * camera.zoom, height / 2 + camera.y * camera.zoom);
+      ctx.scale(camera.zoom, camera.zoom);
 
-    // 2. Biome Sector Platforms & Concentric Range Circles
-    this.renderBiomeTerritories(ctx);
+      // 2. Biome Sector Platforms & Concentric Range Circles
+      this.renderBiomeTerritories(ctx);
 
-    // 2b. City District Roads (UI Metropolis street grid, Core orbital paths)
-    this.renderCityDistrictRoads(ctx, graph);
+      // 2b. City District Roads (UI Metropolis street grid, Core orbital paths)
+      this.renderCityDistrictRoads(ctx, graph);
 
-    // 3. Hierarchical Bundled Energy Conduits
-    this.renderEnergyConduits(ctx, graph, analysis, state, effects);
+      // 3. Hierarchical Bundled Energy Conduits
+      this.renderEnergyConduits(ctx, graph, analysis, state, effects);
 
-    // 4. Procedural Metric-Driven Architectural Buildings
-    this.renderProceduralArchitectures(ctx, graph, analysis, state, effects, camera);
+      // 4. Procedural Metric-Driven Architectural Buildings
+      this.renderProceduralArchitectures(ctx, graph, analysis, state, effects, camera);
 
-    // 5. Active FX (Shockwaves, Pulses)
-    effects.render(ctx);
+      // 5. Active FX (Shockwaves, Pulses)
+      effects.render(ctx);
 
-    ctx.restore();
+      ctx.restore();
 
+      // 6. Screen-Space Anti-Collision Label Badges
+      this.renderScreenSpaceLabels(ctx, width, height);
 
-    // 6. Screen-Space Anti-Collision Label Badges (FIXES GIANT TEXT BUG)
-    this.renderScreenSpaceLabels(ctx, width, height);
-
-    // 7. Tactical Hover Tooltip
-    this.renderScreenSpaceHUD(ctx, width, height);
+      // 7. Tactical Hover Tooltip
+      this.renderScreenSpaceHUD(ctx, width, height);
+    } catch (e) {
+      if (!this._hasLoggedRenderError) {
+        console.error('Canvas Render Crash:', e);
+        this._hasLoggedRenderError = true;
+      }
+      this.ctx.fillStyle = 'rgba(20,0,0,0.8)';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.fillStyle = '#f87171';
+      this.ctx.font = 'bold 24px monospace';
+      this.ctx.fillText('CRITICAL RENDER ERROR', 40, 60);
+      this.ctx.fillStyle = '#fca5a5';
+      this.ctx.font = '14px monospace';
+      this.ctx.fillText(e.stack || e.message, 40, 100);
+    }
   }
+
 
   // ─── Star field seed builder ──────────────────────────────────────────────
   _buildStarField(count, seed) {
