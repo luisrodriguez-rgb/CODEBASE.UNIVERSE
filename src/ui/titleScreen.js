@@ -126,21 +126,27 @@ export class TitleScreenController {
 
     // 4. Card 2: Local Scan & CBM Action
     this.localScanBtn?.addEventListener('click', async () => {
-      sfx.playClick();
-      this.showTerminal();
-      this.localScanBtn.disabled = true;
-      this.localScanBtn.textContent = '[...] LOADING GRAPH...';
-
-      const selectedCbm = this.cbmSelect?.value;
-      const isCbm = selectedCbm && selectedCbm !== 'default';
-
       try {
-        if (isCbm) {
-          this.logTerminal(`[>] Ingesting CBM SQLite Knowledge Graph: ${selectedCbm}...`);
-          const res = await fetch(`/api/cbm/load?project=${encodeURIComponent(selectedCbm)}`);
-          if (!res.ok) throw new Error(`Failed to load CBM project (${res.status})`);
-          const raw = await res.json();
-          const graph = CbmBridgeDriver.transformCbmToUniverseGraph(raw);
+        // Immediately give visual feedback, bypassing anything that could throw
+        if (this.localScanBtn) {
+          this.localScanBtn.disabled = true;
+          this.localScanBtn.textContent = '[...] LOADING GRAPH...';
+        }
+        
+        try { sfx.playClick(); } catch(e) { console.warn('SFX failed', e); }
+        try { this.showTerminal(); } catch(e) { console.warn('Terminal failed', e); }
+
+        const selectedCbm = this.cbmSelect?.value;
+        const isCbm = selectedCbm && selectedCbm !== 'default';
+
+        try {
+          if (isCbm) {
+            this.logTerminal(`[>] Ingesting CBM SQLite Knowledge Graph: ${selectedCbm}...`);
+            const res = await fetch(`/api/cbm/load?project=${encodeURIComponent(selectedCbm)}`);
+            if (!res.ok) throw new Error(`Failed to load CBM project (${res.status})`);
+            const raw = await res.json();
+            const graph = CbmBridgeDriver.transformCbmToUniverseGraph(raw);
+
 
           sfx.playVictory();
           this.logTerminal(`[SUCCESS] CBM Ingestion Complete: ${graph.nodes.size} nodes, ${graph.edges.length} connections.`);
@@ -190,9 +196,18 @@ export class TitleScreenController {
       } catch (err) {
         sfx.playAlert();
         this.logTerminal(`[ERROR] ${err.message}`);
-        this.localScanBtn.disabled = false;
-        this.localScanBtn.textContent = '[>] SCAN LOCAL REPOSITORY';
+        if (this.localScanBtn) {
+          this.localScanBtn.disabled = false;
+          this.localScanBtn.textContent = '[>] SCAN LOCAL REPOSITORY';
+        }
       }
+    } catch (globalErr) {
+      console.error('Fatal UI Error in click listener:', globalErr);
+      if (this.localScanBtn) {
+        this.localScanBtn.disabled = false;
+        this.localScanBtn.textContent = '[!] CRITICAL ERROR - REFRESH';
+      }
+    }
     });
 
     // 5. Card 3: Preset World Launch Action
