@@ -62,42 +62,116 @@ export class WorldLayout {
   }
 
   initPositions() {
-    // Count nodes per biome to dynamically size territories
+    // Group nodes by biome, enrich with nodeStats
     const biomeNodes = new Map();
-
     this.nodes.forEach((node) => {
       const b = node.biome || 'core';
       if (!biomeNodes.has(b)) biomeNodes.set(b, []);
       biomeNodes.get(b).push(node);
     });
 
-    // Distribute with Golden Ratio phyllotaxis within intentional sector bounds
     for (const sector of Object.values(BIOME_SECTORS)) {
       const nodes = biomeNodes.get(sector.id) || [];
       const count = nodes.length;
-      const wl = WORLD_LAYOUT[sector.id];
+      const wl    = WORLD_LAYOUT[sector.id];
 
-      // Dynamic radius: grows with node count but never below the designed baseRadius
-      const dynamicR = count === 0 ? 0 : Math.sqrt(count) * 34 + 20;
-      sector.radius = count === 0 ? 0 : Math.max(wl ? wl.baseRadius : 90, dynamicR);
+      if (count === 0) { sector.radius = 0; continue; }
 
-      nodes.forEach((node, index) => {
-        if (index === 0) {
-          // Central landmark building of the sector
-          node.x = sector.x;
-          node.y = sector.y;
-        } else {
-          // Golden ratio phyllotaxis — tight enough to look urban, loose enough to be readable
-          const phi = 137.508 * (Math.PI / 180);
-          const theta = index * phi;
-          const r = Math.sqrt(index) * 38;
+      const dynamicR = Math.sqrt(count) * 34 + 20;
+      sector.radius  = Math.max(wl ? wl.baseRadius : 90, dynamicR);
 
-          node.x = sector.x + Math.cos(theta) * r;
-          node.y = sector.y + Math.sin(theta) * r;
-        }
-        node.vx = 0;
-        node.vy = 0;
-      });
+      if (sector.id === 'core') {
+        // ── CORE CITADEL: Concentric rings sorted by centrality ──────────────
+        // Architecturally: most central nodes orbit closest to the spire,
+        // forming InnerRing / MiddleRing / OuterRing.
+        const sorted = [...nodes].sort((a, b) => {
+          const sa = this.nodeStats.get(a.id);
+          const sb = this.nodeStats.get(b.id);
+          return ((sb?.centralityPct || 0) - (sa?.centralityPct || 0));
+        });
+
+        // Ring definitions — fixed radii so rings are always distinct
+        const rings = [
+          { max:  1, r:  0   },   // [0]    Central spire node
+          { max:  7, r:  62  },   // [1-7]  Inner ring
+          { max: 20, r:  105 },   // [8-20] Middle ring
+          { max: Infinity, r: 155 },  // [21+] Outer ring
+        ];
+
+        sorted.forEach((node, i) => {
+          let ring = rings[rings.length - 1];
+          let prev = 0;
+          for (const rDef of rings) {
+            if (i < rDef.max) { ring = rDef; break; }
+            prev = rDef.max;
+          }
+
+          if (ring.r === 0) {
+            // Central node — sits at the spire
+            node.x = sector.x;
+            node.y = sector.y;
+          } else {
+            // Spread evenly around the ring
+            const ringCount = ring.max === Infinity ? count - prev : ring.max - prev;
+            const angle = ((i - prev) / ringCount) * Math.PI * 2 - Math.PI / 2;
+            node.x = sector.x + Math.cos(angle) * ring.r;
+            node.y = sector.y + Math.sin(angle) * ring.r * 0.55; // slight ellipse for perspective
+          }
+          node.vx = 0; node.vy = 0;
+        });
+
+      } else if (sector.id === 'ui') {
+        // ── UI METROPOLIS: City-block grid (streets between buildings) ────────
+        // Most central/important nodes go to the center of the grid (like downtown).
+        const sorted = [...nodes].sort((a, b) => {
+          const sa = this.nodeStats.get(a.id);
+          const sb = this.nodeStats.get(b.id);
+          return ((sb?.centralityPct || 0) - (sa?.centralityPct || 0));
+        });
+
+        const CELL = 56;  // pixels per grid cell (building + street gap)
+        const cols = Math.ceil(Math.sqrt(count * 1.25));
+        const rows = Math.ceil(count / cols);
+        const gridW = cols * CELL;
+        const gridH = rows * CELL;
+
+        sorted.forEach((node, i) => {
+          // Spiral-out from center of grid so important nodes are central
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          node.x = sector.x - gridW / 2 + col * CELL + CELL / 2;
+          node.y = sector.y - gridH / 2 + row * CELL + CELL / 2;
+          node.vx = 0; node.vy = 0;
+        });
+
+        // Update sector radius to match actual grid footprint
+        sector.radius = Math.max(sector.radius, Math.max(gridW, gridH) / 2 + 40);
+
+      } else {
+        // ── ALL OTHER BIOMES: Tight Golden-Ratio phyllotaxis ─────────────────
+        // Sort by importance descending so the center building is the most important
+        const sorted = [...nodes].sort((a, b) => {
+          const sa = this.nodeStats.get(a.id);
+          const sb = this.nodeStats.get(b.id);
+          return ((sb?.centralityPct || 0) - (sa?.centralityPct || 0));
+        });
+
+        const PHI = 137.508 * (Math.PI / 180);
+        const SPACING = sector.id === 'hazard' ? 42 : 36;
+
+        sorted.forEach((node, index) => {
+          if (index === 0) {
+            node.x = sector.x;
+            node.y = sector.y;
+          } else {
+            const theta = index * PHI;
+            const r     = Math.sqrt(index) * SPACING;
+            node.x = sector.x + Math.cos(theta) * r;
+            node.y = sector.y + Math.sin(theta) * r * 0.75; // slight squish for perspective
+          }
+          node.vx = 0; node.vy = 0;
+        });
+      }
     }
   }
 

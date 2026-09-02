@@ -181,6 +181,9 @@ export class GraphWorld {
     // 2. Biome Sector Platforms & Concentric Range Circles
     this.renderBiomeTerritories(ctx);
 
+    // 2b. City District Roads (UI Metropolis street grid, Core orbital paths)
+    this.renderCityDistrictRoads(ctx, graph);
+
     // 3. Hierarchical Bundled Energy Conduits
     this.renderEnergyConduits(ctx, graph, analysis, state, effects);
 
@@ -191,6 +194,7 @@ export class GraphWorld {
     effects.render(ctx);
 
     ctx.restore();
+
 
     // 6. Screen-Space Anti-Collision Label Badges (FIXES GIANT TEXT BUG)
     this.renderScreenSpaceLabels(ctx, width, height);
@@ -288,6 +292,79 @@ export class GraphWorld {
     }
     ctx.stroke();
     ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // ─── City District Roads & Infrastructure ─────────────────────────────────
+  // Drawn UNDER buildings. Two layers:
+  //  A) Core Citadel: 3 concentric orbital rings at fixed radii
+  //  B) UI Metropolis: city block street grid derived from actual node positions
+  renderCityDistrictRoads(ctx, graph) {
+    ctx.save();
+
+    // --- A. Core Citadel Orbital Ring Paths ---
+    const coreRings = [62, 105, 155];
+    ctx.setLineDash([4, 8]);
+    ctx.lineWidth = 0.8;
+    for (let ri = 0; ri < coreRings.length; ri++) {
+      const rr = coreRings[ri];
+      ctx.strokeStyle = `rgba(56,189,248,${0.18 - ri * 0.04})`;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, rr, rr * 0.55, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // --- B. UI Metropolis Street Grid ---
+    // Collect all UI-biome nodes and derive the grid bounding box from their positions
+    const uiSector = BIOME_SECTORS.ui;
+    if (!uiSector || uiSector.radius === 0) { ctx.restore(); return; }
+
+    const uiNodes = [];
+    if (graph && graph.nodes) {
+      for (const node of graph.nodes.values()) {
+        if ((node.biome || 'core') === 'ui') uiNodes.push(node);
+      }
+    }
+    if (uiNodes.length < 4) { ctx.restore(); return; }
+
+    // Derive grid bounds from actual node positions
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const n of uiNodes) {
+      minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x);
+      minY = Math.min(minY, n.y); maxY = Math.max(maxY, n.y);
+    }
+    const padX = 28, padY = 22;
+    minX -= padX; maxX += padX; minY -= padY; maxY += padY;
+
+    // Detect cell size from node spacing (CELL = 56 from layout.js)
+    const CELL = 56;
+    const cols = Math.ceil(Math.sqrt(uiNodes.length * 1.25));
+
+    // Horizontal streets
+    ctx.strokeStyle = 'rgba(168,85,247,0.12)';
+    ctx.lineWidth = 1.2;
+    for (let ry = minY; ry <= maxY + CELL; ry += CELL) {
+      ctx.beginPath(); ctx.moveTo(minX, ry); ctx.lineTo(maxX, ry); ctx.stroke();
+    }
+    // Vertical streets
+    for (let rx = minX; rx <= maxX + CELL; rx += CELL) {
+      ctx.beginPath(); ctx.moveTo(rx, minY); ctx.lineTo(rx, maxY); ctx.stroke();
+    }
+
+    // Ground glow under UI grid
+    const gridGlow = ctx.createRadialGradient(
+      uiSector.x, uiSector.y, 20,
+      uiSector.x, uiSector.y, uiSector.radius + 60
+    );
+    gridGlow.addColorStop(0,   'rgba(168,85,247,0.06)');
+    gridGlow.addColorStop(0.6, 'rgba(168,85,247,0.02)');
+    gridGlow.addColorStop(1,   'transparent');
+    ctx.fillStyle = gridGlow;
+    ctx.beginPath();
+    ctx.arc(uiSector.x, uiSector.y, uiSector.radius + 60, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
   }
 
